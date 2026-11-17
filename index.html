@@ -192,6 +192,8 @@ label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--so
 .dsec{font-size:15px;margin:14px 0 6px;color:var(--soft)}
 .dline{display:flex;gap:10px;align-items:flex-start;padding:9px 10px;border-radius:12px;background:var(--bg);margin-bottom:6px;cursor:pointer}
 .dline:hover{background:var(--pink2)}
+.tsel{display:flex;align-items:center;gap:6px}
+.tsel select{width:auto;min-width:70px}
 .kbd{font-weight:700}
 </style>
 </head>
@@ -412,6 +414,14 @@ function avaHtml(p, sm){ const id = String(p && p.id || ''); let h = 0; for (con
 function whoHtml(e){ return `<span class="whos">${(e.people||[]).map(id=>`<span class="who">${avaHtml({id},true)}${esc(pname(id))}</span>`).join('')}</span>`; }
 const capOf = p => Number(p && p.cap) || 20;
 const vacTotal = p => Math.min((Number(p.carry)||0) + (Number(p.quota)||0), capOf(p));
+const thT = t => t ? String(t).replace(':', '.') : '';
+function timeSel(id, val, ro){
+  const [h, m] = (val||'').split(':');
+  const hours = ['<option value="">--</option>'].concat(Array.from({length:25},(_,i)=>{ const v=pad(i); return `<option value="${v}" ${v===h?'selected':''}>${v}</option>`; }));
+  const mins = Array.from({length:12},(_,i)=>pad(i*5)); if (m && !mins.includes(m)) mins.push(m);
+  return `<div class="tsel"><select class="inp" id="${id}H" ${ro?'disabled':''}>${hours.join('')}</select><b>.</b><select class="inp" id="${id}M" ${ro?'disabled':''}>${mins.sort().map(v=>`<option value="${v}" ${v===(m||'00')?'selected':''}>${v}</option>`).join('')}</select><span class="muted">น.</span></div>`;
+}
+function readTime(id){ const h = $('#'+id+'H'), m = $('#'+id+'M'); if (!h) return undefined; if (!h.value) return ''; return h.value==='24' ? '24:00' : h.value + ':' + (m.value||'00'); }
 const LEAVE_ORDER = ['sick','biz','vac','study','trip','train','wfh','meet','late']; // export priority
 const GROUPS = ['ข้าราชการ','จ้างเหมาบริการ','พนักงานราชการ'];
 const AVAS = ['','','','','','','','','','','','','','','','','','','',''];
@@ -442,7 +452,7 @@ const S = { staff:{}, events:{}, holidays:{}, ready:{staff:false,events:false,ho
 let SHEET_URL = '';
 let view = 'today', cursorDay = todayIso(), cursorMonth = todayIso().slice(0,7), filterPerson = '';
 // URL ของ Apps Script Web App (Deploy > Web app > /exec)
-const API_URL = 'https://script.google.com/macros/s/AKfycbzimM00v74zRZdEe4qjkabU9dlljkJ9CqgeU_pD_GRmLagxr22_F0hNlKaLCwaLxDPh8Q/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbx6uA0BCCK86FK4Vdd9n62R3xiOgCGM_E77SY3GHoiDkL3o19ex1gV7q8p4BWpX7ePYsA/exec';
 async function api(payload){
   const r = payload
     ? await fetch(API_URL, {method:'POST', body: JSON.stringify(payload)})   // text/plain: ไม่ต้อง preflight
@@ -535,7 +545,7 @@ function itemHtml(e, opts={}){
   const T = TYPES[e.type]||TYPES.other;
   const range = (e.end && e.end!==e.start) ? `${thShort(e.start)} – ${thShort(e.end)}` : (opts.showDate ? thShort(e.start) : '');
   const who = opts.showWho ? (e.people||[]).map(pname).join(', ') : '';
-  const sub = [e.time ? ''+e.time+(e.endTime?'–'+e.endTime:'') : '', e.place ? ''+e.place : '', range, who].filter(Boolean).join(' · ');
+  const sub = [e.time ? thT(e.time)+(e.endTime?'–'+thT(e.endTime):'')+' น.' : '', e.place ? ''+e.place : '', range, who].filter(Boolean).join(' · ');
   return `<div class="item" style="background:${T.bg}" data-ev="${esc(e.id)}"><span>${T.emoji}</span><div><div class="t" style="color:${T.fg}">${esc(e.title || T.label)}${e.title?` <span class="sub">(${T.label})</span>`:''}</div>${sub?`<div class="sub">${esc(sub)}</div>`:''}</div></div>`;
 }
 
@@ -548,7 +558,7 @@ function vToday(){
   const tasks = evList().filter(e=>e.type==='task' && (e.start===s || (s===t && !e.done && e.start < s)))
     .sort((a,b)=> (a.done?1:0)-(b.done?1:0) || a.start.localeCompare(b.start));
   const who = e => (e.people||[]).map(pname).join(', ');
-  const timeCell = e => e.time ? `<div class="tm">${esc(e.time)}${e.endTime?`<small>– ${esc(e.endTime)}</small>`:''}</div>` : '<div class="tm muted">ทั้งวัน</div>';
+  const timeCell = e => e.time ? `<div class="tm">${esc(thT(e.time))}${e.endTime?`<small>– ${esc(thT(e.endTime))} น.</small>`:'<small>น.</small>'}</div>` : '<div class="tm muted">ทั้งวัน</div>';
   const row = e => `<div class="agenda" data-ev="${esc(e.id)}">${timeCell(e)}<div class="ag-body">
       <div class="ag-title">${esc(e.title || (TYPES[e.type]||TYPES.other).label)}</div>
       ${e.place?`<div class="ag-meta"><span class="lbl">สถานที่</span>${esc(e.place)}</div>`:''}
@@ -556,7 +566,7 @@ function vToday(){
       ${e.note?`<div class="ag-meta muted">${esc(e.note)}</div>`:''}</div></div>`;
   const taskRow = e => `<div class="task ${e.done?'done':''}"><button class="check ${e.done?'done':''}" data-done="${esc(e.id)}" ${S.canWrite?'':'disabled'} title="ทำเครื่องหมายว่าส่งแล้ว">${e.done?'✓':''}</button>
       <div style="flex:1;min-width:0;cursor:pointer" data-ev="${esc(e.id)}"><div class="tt">${esc(e.title||'งานที่ต้องส่ง')}</div>
-      <div class="ag-meta"><span class="lbl">ผู้รับผิดชอบ</span>${whoHtml(e)}${e.time?` · ภายใน ${esc(e.time)} น.`:''}${e.start<s?` <span class="due late">· เลยกำหนด (${thShort(e.start)})</span>`:''}${e.done?' <span class="due">· ส่งแล้ว</span>':''}</div></div></div>`;
+      <div class="ag-meta"><span class="lbl">ผู้รับผิดชอบ</span>${whoHtml(e)}${e.time?` · ภายใน ${esc(thT(e.time))} น.`:''}${e.start<s?` <span class="due late">· เลยกำหนด (${thShort(e.start)})</span>`:''}${e.done?' <span class="due">· ส่งแล้ว</span>':''}</div></div></div>`;
   const sec = (title, color, n, body, empty, type) => `<section class="card agcard" style="border-top:4px solid ${color}">
       <div class="row" style="justify-content:space-between;margin-bottom:6px"><h3>${title} <span class="cnt">${n}</span></h3>
       ${S.canWrite?`<button class="btn sm ghost" data-quick="${type}">+ เพิ่ม</button>`:''}</div>
@@ -588,7 +598,7 @@ function vMonth(kind){
     const evs = eventsOn(s, filterPerson).filter(e=>kinds.includes(e.type));
     const chips = [];
     evs.forEach(e=>{ const T=TYPES[e.type]||TYPES.other;
-      if (kind==='agenda') chips.push(`<div class="chip" style="background:${T.bg};color:${T.fg}" data-ev="${esc(e.id)}" title="${esc((e.time?e.time+' ':'')+(e.title||T.label)+(e.place?' @ '+e.place:''))}">${e.time?`<b>${esc(e.time)}</b> `:T.emoji+' '}<span class="nm">${esc(e.title||T.label)}</span></div>`);
+      if (kind==='agenda') chips.push(`<div class="chip" style="background:${T.bg};color:${T.fg}" data-ev="${esc(e.id)}" title="${esc((e.time?thT(e.time)+' น. ':'')+(e.title||T.label)+(e.place?' @ '+e.place:''))}">${e.time?`<b>${esc(thT(e.time))}</b> `:T.emoji+' '}<span class="nm">${esc(e.title||T.label)}</span></div>`);
       else (e.people||[]).filter(p=>!filterPerson||p===filterPerson).forEach(p=>chips.push(`<div class="chip pchip" style="background:${T.bg};color:${T.fg}" data-ev="${esc(e.id)}" title="${esc(pname(p)+' – '+T.label)}">${avaHtml({id:p},'xs')}<span class="nm">${esc(pname(p))}</span><span class="kc">${esc(T.code)}</span></div>`));
     });
     cells += `<div class="day ${d.getMonth()!==m-1?'dim':''} ${isHol(s)?'hol':isWeekend(s)?'off':''} ${s===t?'today':''}" data-dayc="${s}">
@@ -733,8 +743,8 @@ function drawEvent(){
       ${T.single?'<div></div>':`<label class="f">ถึงวันที่<input type="date" class="inp" id="mEnd" value="${M.end||M.start}" ${ro?'disabled':''}></label>`}
     </div>
     ${T.timed||T.task||M.type==='trip'||M.type==='train'?`<div class="fr" style="margin-top:10px">
-      <label class="f">เวลา${T.task?' (ถ้ามี)':''}<input type="time" class="inp" id="mTime" value="${esc(M.time||'')}" ${ro?'disabled':''}></label>
-      <label class="f">ถึงเวลา<input type="time" class="inp" id="mEndTime" value="${esc(M.endTime||'')}" ${ro?'disabled':''}></label></div>`:''}
+      <label class="f">เวลา${T.task?' (ถ้ามี)':''}${timeSel('mTime', M.time, ro)}</label>
+      <label class="f">ถึงเวลา${timeSel('mEndTime', M.endTime, ro)}</label></div>`:''}
     <label class="f" style="margin-top:10px">${T.task?'ชื่องาน':M.type==='meet'?'หัวข้อประชุม':'เรื่อง / รายละเอียดสั้นๆ'}<input class="inp" id="mTitle" value="${esc(M.title||'')}" placeholder="${T.task?'เช่น รายงาน AD Biweekly':M.type==='meet'?'เช่น ประชุมกอง':'(ไม่ใส่ก็ได้)'}" ${ro?'disabled':''}></label>
     ${T.task?'':`<label class="f" style="margin-top:10px">สถานที่<input class="inp" id="mPlace" value="${esc(M.place||'')}" placeholder="เช่น นครสวรรค์" ${ro?'disabled':''}></label>`}
     <label class="f" style="margin-top:10px">หมายเหตุ<textarea class="inp" id="mNote" rows="2" ${ro?'disabled':''}>${esc(M.note||'')}</textarea></label>
@@ -749,13 +759,15 @@ function readEventForm(){
   if (v('mStart')!==undefined) M.start = v('mStart') || M.start;
   if (v('mEnd')!==undefined) M.end = v('mEnd') || M.start;
   const T = TYPES[M.type]||TYPES.other; if (T.single) M.end = M.start;
-  for (const [k,id] of [['time','mTime'],['endTime','mEndTime'],['title','mTitle'],['place','mPlace'],['note','mNote']]) { const x=v(id); if (x!==undefined) M[k]=x.trim(); }
+  { const a = readTime('mTime'), b = readTime('mEndTime'); if (a!==undefined) M.time = a; if (b!==undefined) M.endTime = b; }
+  for (const [k,id] of [['title','mTitle'],['place','mPlace'],['note','mNote']]) { const x=v(id); if (x!==undefined) M[k]=x.trim(); }
   const d = $('#mDone'); if (d) M.done = d.checked;
 }
 async function saveEvent(){
   readEventForm();
   if (!M.people.length) return toast('เลือกอย่างน้อย 1 คนนะ');
   if (M.end < M.start) return toast('วันที่สิ้นสุดต้องไม่ก่อนวันเริ่ม');
+  if (M.time && M.endTime && M.start===M.end && M.endTime < M.time) return toast('เวลาสิ้นสุดต้องไม่ก่อนเวลาเริ่ม');
   const T = TYPES[M.type];
   if (!T.timed && !T.task && !['trip','train'].includes(M.type)) { M.time=''; M.endTime=''; }
   const data = {type:M.type, start:M.start, end:M.end, people:M.people, title:M.title||'', place:M.place||'', note:M.note||'', time:M.time||'', endTime:M.endTime||'',
@@ -787,7 +799,7 @@ function openStaff(id){
 /* ================= detail views (read-only) ================= */
 let DETAIL_DAY = null;
 const rangeTxt = e => (e.end && e.end!==e.start) ? `${thDate(e.start)} – ${thDate(e.end)}` : thDate(e.start);
-const timeTxt = e => e.time ? e.time + (e.endTime ? '–' + e.endTime : '') + ' น.' : '';
+const timeTxt = e => e.time ? thT(e.time) + (e.endTime ? '–' + thT(e.endTime) : '') + ' น.' : '';
 function detailRow(label, val){ return val ? `<div class="drow"><span class="lbl">${label}</span><div>${val}</div></div>` : ''; }
 function openDetail(id){
   const e = S.events[id]; if (!e) return;
