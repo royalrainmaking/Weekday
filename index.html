@@ -212,6 +212,10 @@ label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--so
 .tg .nm:hover{color:#c2416b}
 .tg td.na{background:repeating-linear-gradient(45deg,#f4efea,#f4efea 4px,#fbf8f5 4px,#fbf8f5 8px);cursor:default}
 .tg td.na:hover{outline:none}
+.pill.tog{border:2px solid transparent;cursor:pointer;font:inherit;font-size:13px;font-weight:600;transition:opacity .15s}
+.pill.tog .ck{display:inline-block;width:14px;height:14px;border-radius:4px;background:#fff;border:1.5px solid currentColor;font-size:10px;line-height:11px;text-align:center}
+.pill.tog.off{opacity:.45;background:#fff!important;border-color:currentColor;text-decoration:line-through}
+.pill.tog-all{border:1.5px dashed var(--line);background:#fff;cursor:pointer;font:inherit;font-size:13px;color:var(--soft)}
 .kbd{font-weight:700}
 
 /* ---------- desktop extras ---------- */
@@ -702,7 +706,7 @@ function vMonth(kind){
   for (let i=0;i<42;i++){
     const d = new Date(start); d.setDate(start.getDate()+i); const s = isoOf(d);
     if (i>=35 && d.getMonth()!==m-1) break;
-    const evs = eventsOn(s, filterPerson).filter(e=>kinds.includes(e.type));
+    const evs = eventsOn(s, filterPerson).filter(e=>kinds.includes(e.type) && !HIDE.has(e.type));
     const chips = [];
     evs.forEach(e=>{ const T=TYPES[e.type]||TYPES.other;
       if (kind==='agenda') { const ppl = (e.people||[]); const show = ppl.slice(0,5);
@@ -726,8 +730,8 @@ function vMonth(kind){
     <button class="btn sm" data-mon="0">เดือนนี้</button><div class="spacer"></div>
     <select class="inp" style="width:auto" id="filterP">${opts}</select>
     ${S.canWrite?`<button class="btn sm pri" data-quick="${kind==='agenda'?'meet':'vac'}">+ ${kind==='agenda'?'เพิ่มประชุม/นัดหมาย':'ลงวันลา'}</button>`:''}</div>
-    ${legendHtml(kinds)}
-    <div class="muted" style="font-size:13px;margin:-4px 0 8px">คลิกวันที่เพื่อดูรายละเอียดทั้งวัน · คลิกรายการเพื่อดูรายละเอียด</div>
+    ${legendHtml(kinds, true)}
+    <div class="muted" style="font-size:13px;margin:-4px 0 8px">กดป้ายสีด้านบนเพื่อเปิด/ปิดการแสดงแต่ละประเภท · คลิกวันที่เพื่อดูรายละเอียดทั้งวัน</div>
     <div class="mhead">${TH_D.map(x=>`<div>${x}</div>`).join('')}</div><div class="month">${cells}</div>
     <div class="mlist">${mlistHtml(kind, mlist, t)}</div>`;
 }
@@ -743,9 +747,14 @@ function mlistHtml(kind, list, t){
         <div class="mw">${ppl.slice(0,6).map(id=>`<span class="who">${avaHtml({id},true)}${esc(pname(id))}</span>`).join('')}${ppl.length>6?`<span class="muted">+${ppl.length-6}</span>`:''}</div></div>`; }).join('')
   }</div></div>`).join('');
 }
-function legendHtml(kinds){
-  return `<div class="legend">${Object.entries(TYPES).filter(([k])=>!kinds||kinds.includes(k)).map(([k,T])=>`<span class="pill" style="background:${T.bg};color:${T.fg}">${T.emoji} ${T.label}${T.code?` <span class="kbd">${T.code}</span>`:''}</span>`).join('')}
-  <span class="pill" style="background:var(--off)">เสาร์-อาทิตย์</span><span class="pill" style="background:var(--hol)">วันหยุดราชการ</span></div>`;
+let HIDE = new Set((lsGet('teamcal-hide')||'').split(',').filter(Boolean));
+function legendHtml(kinds, toggle){
+  const items = Object.entries(TYPES).filter(([k])=>!kinds||kinds.includes(k)).map(([k,T])=> toggle
+    ? `<button class="pill tog ${HIDE.has(k)?'off':''}" data-tog="${k}" style="background:${T.bg};color:${T.fg}" aria-pressed="${!HIDE.has(k)}" title="กดเพื่อ${HIDE.has(k)?'แสดง':'ซ่อน'}${T.label}"><span class="ck">${HIDE.has(k)?'':'✓'}</span>${T.label}${T.code?` <span class="kbd">${T.code}</span>`:''}</button>`
+    : `<span class="pill" style="background:${T.bg};color:${T.fg}">${T.emoji} ${T.label}${T.code?` <span class="kbd">${T.code}</span>`:''}</span>`).join('');
+  const anyHidden = toggle && kinds.some(k=>HIDE.has(k));
+  return `<div class="legend">${items}${toggle?`<button class="pill tog-all" data-togall="${kinds.join(',')}">${anyHidden?'แสดงทั้งหมด':'ซ่อนทั้งหมด'}</button>`:''}
+  ${toggle?'':'<span class="pill" style="background:var(--off)">เสาร์-อาทิตย์</span><span class="pill" style="background:var(--hol)">วันหยุดราชการ</span>'}</div>`;
 }
 
 function vTeam(){
@@ -1021,6 +1030,8 @@ document.addEventListener('click', async ev=>{
   const d = t.dataset;
   if (d.done !== undefined && t.dataset.done) { const e = S.events[d.done]; if (!e || !S.canWrite) return;
     await guard(store.set('events', d.done, {...e, done: !e.done, updatedAt:new Date().toISOString()})); return; }
+  if (d.tog) { HIDE.has(d.tog) ? HIDE.delete(d.tog) : HIDE.add(d.tog); lsSet('teamcal-hide', [...HIDE].join(',')); render(); return; }
+  if (d.togall) { const ks = d.togall.split(','); const any = ks.some(k=>HIDE.has(k)); ks.forEach(k=> any ? HIDE.delete(k) : HIDE.add(k)); lsSet('teamcal-hide', [...HIDE].join(',')); render(); return; }
   if (d.person) { DETAIL_DAY = null; openPerson(d.person); return; }
   if (d.addPersonLeave) { openEvent(null, {person: d.addPersonLeave, type:'vac', date: todayIso()}); return; }
   if (d.editEv) { openEvent(d.editEv); return; }
