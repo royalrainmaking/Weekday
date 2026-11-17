@@ -2,7 +2,8 @@
 <html lang="th">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#fff7ef">
 <title>ปฏิทินงานทีม</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -212,6 +213,88 @@ label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--so
 .tg td.na{background:repeating-linear-gradient(45deg,#f4efea,#f4efea 4px,#fbf8f5 4px,#fbf8f5 8px);cursor:default}
 .tg td.na:hover{outline:none}
 .kbd{font-weight:700}
+
+/* ---------- desktop extras ---------- */
+nav.tabs a{display:inline-flex;align-items:center;gap:6px}
+nav.tabs .ti{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;display:none}
+nav.tabs .ls{display:none}
+.mk,.mlist,.scards{display:none}
+.mday{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.mday.past{opacity:.6}
+.mday.is-today .mdate{background:var(--pink);color:#fff}
+.mdate{width:44px;flex:none;text-align:center;border-radius:12px;background:#fff;padding:6px 0;line-height:1.1;cursor:pointer;box-shadow:0 1px 2px rgba(74,59,82,.08)}
+.mdate b{display:block;font-size:18px}.mdate span{font-size:11px}
+.mitems{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.mitem{background:#fff;border-radius:10px;padding:7px 10px;border-left:4px solid;cursor:pointer}
+.mt{font-size:14px;line-height:1.35}
+.mw{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:4px;font-size:13px}
+.scard{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);padding:12px;cursor:pointer}
+.svac{display:flex;align-items:center;gap:8px;margin:10px 0 8px;font-size:13px}
+.svac .bar{flex:1}
+.sgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.sgrid div{background:var(--bg);border-radius:10px;padding:6px;text-align:center}
+.sgrid b{display:block;font-size:16px}.sgrid span{font-size:11px;color:var(--soft)}
+
+/* ---------- mobile ---------- */
+@media (max-width:700px){
+  body{font-size:15px}
+  .wrap{padding:12px 12px calc(84px + env(safe-area-inset-bottom))}
+  header.top{gap:8px;margin-bottom:10px;flex-wrap:nowrap}
+  .logo h1{font-size:20px}
+  .logo small{display:none}
+  .sun{width:34px;height:34px}
+  #meSel{max-width:150px;font-size:14px;padding:6px 10px}
+  #addBtn{position:fixed;right:16px;bottom:calc(76px + env(safe-area-inset-bottom));z-index:40;width:56px;height:56px;border-radius:50%;padding:0;justify-content:center;box-shadow:0 6px 18px rgba(232,111,143,.45)}
+  #addBtn .addtxt{display:none}
+  #addBtn .plus{font-size:26px;line-height:1}
+  nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;margin:0;width:auto;max-width:none;border-radius:18px 18px 0 0;padding:6px 4px calc(6px + env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(6,1fr);gap:0;box-shadow:0 -4px 16px rgba(74,59,82,.08);overflow:visible}
+  nav.tabs a{flex-direction:column;gap:2px;padding:6px 0;border-radius:12px;font-size:11px;justify-content:center;text-align:center}
+  nav.tabs .ti{display:block;width:22px;height:22px}
+  nav.tabs .lf{display:none}
+  nav.tabs .ls{display:block}
+  .inp{font-size:16px}
+  .daynav{gap:6px}
+  .daynav h2{order:-1;flex-basis:100%;font-size:18px;margin:0 0 2px}
+  .daynav .spacer{display:none}
+  .daynav .muted{font-size:12px!important}
+  .legend{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;margin:6px -12px 8px;padding-left:12px;padding-right:12px;scrollbar-width:none}
+  .legend .pill{flex:none}
+  .mhead{gap:3px;font-size:12px}
+  .month{gap:3px}
+  .day{min-height:52px;padding:4px 3px;border-radius:10px;gap:2px}
+  .day .chip{display:none}
+  .dnum{font-size:13px}
+  .dnum span.h{display:none}
+  .day.hol .dnum{color:#c26a1b}
+  .mk{display:flex;flex-wrap:wrap;gap:2px;align-items:center;justify-content:center}
+  .mk b{font-size:10px;color:var(--soft)}
+  .mdot{width:7px;height:7px;border-radius:50%;display:inline-block}
+  .mface{border-radius:50%;display:inline-flex}
+  .mface .pic.xs{width:16px;height:16px}
+  .mlist{display:block;margin-top:14px}
+  .tgwrap{max-height:none;margin:0 -12px;border-radius:0}
+  .tg .nm{min-width:96px;max-width:110px;padding:4px 6px;overflow:hidden;text-overflow:ellipsis}
+  .tg .nm .pic.sm{display:none}
+  .tg th,.tg td{min-width:30px;height:32px}
+  .scards{display:flex;flex-direction:column;gap:10px}
+  .sumwrap{display:none}
+  .todaygrid{gap:12px}
+  .agenda{gap:10px}
+  .tm{width:54px;font-size:15px}
+  .lbl{min-width:0;display:block;margin:2px 0 0}
+  .set-grid{grid-template-columns:minmax(0,1fr);gap:12px}
+  .set-grid>.card,.todaygrid>*{min-width:0}
+  .fr>*{min-width:0}
+  .scrim{padding:0;align-items:flex-end}
+  .modal{border-radius:22px 22px 0 0;max-height:92vh;overflow-y:auto;padding:16px 16px calc(16px + env(safe-area-inset-bottom));animation:sheet .22s ease-out}
+  .types{grid-template-columns:repeat(3,1fr);gap:5px}
+  .tbtn{padding:6px 4px;font-size:12px}
+  .mfoot{position:sticky;bottom:calc(-16px - env(safe-area-inset-bottom));background:#fff;padding:10px 0 4px;margin-bottom:-4px}
+  .drow{flex-direction:column;gap:2px}
+  .drow .lbl{width:auto}
+  .toast{bottom:calc(150px + env(safe-area-inset-bottom))}
+}
+@keyframes sheet{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
 </style>
 </head>
 <body>
@@ -223,15 +306,15 @@ label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--so
     </div>
     <div class="spacer"></div>
     <select id="meSel" class="inp" style="width:auto;border-radius:999px" title="ฉันคือใคร (จำไว้ในเครื่องนี้)"></select>
-    <button class="btn pri" id="addBtn">＋ ลงรายการ</button>
+    <button class="btn pri" id="addBtn" aria-label="ลงรายการ"><span class="plus">＋</span><span class="addtxt"> ลงรายการ</span></button>
   </header>
   <nav class="tabs" id="tabs">
-    <a href="#today" data-v="today">วันนี้</a>
-    <a href="#leave" data-v="leave">ปฏิทินวันลา</a>
-    <a href="#agenda" data-v="agenda">ปฏิทินประชุม/นัดหมาย</a>
-    <a href="#team" data-v="team">ตารางทีม</a>
-    <a href="#summary" data-v="summary">สรุปวันลา</a>
-    <a href="#settings" data-v="settings">ตั้งค่า & Export</a>
+    <a href="#today" data-v="today"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v14H4z M4 10h16 M8 3v4 M16 3v4" /><circle cx="12" cy="15" r="2" fill="currentColor" stroke="none"/></svg><span class="lf">วันนี้</span><span class="ls">วันนี้</span></a>
+    <a href="#leave" data-v="leave"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v14H4z M4 10h16 M8 3v4 M16 3v4 M8 14h3 M13 14h3 M8 17h3"/></svg><span class="lf">ปฏิทินวันลา</span><span class="ls">วันลา</span></a>
+    <a href="#agenda" data-v="agenda"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg><span class="lf">ปฏิทินประชุม/นัดหมาย</span><span class="ls">ประชุม</span></a>
+    <a href="#team" data-v="team"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4z M4 10h16 M4 14.5h16 M9 5v14"/></svg><span class="lf">ตารางทีม</span><span class="ls">ตารางทีม</span></a>
+    <a href="#summary" data-v="summary"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V10 M10 20V5 M15 20v-7 M20 20v-11"/></svg><span class="lf">สรุปวันลา</span><span class="ls">สรุป</span></a>
+    <a href="#settings" data-v="settings"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 3v3 M12 18v3 M3 12h3 M18 12h3 M5.6 5.6l2.1 2.1 M16.3 16.3l2.1 2.1 M5.6 18.4l2.1-2.1 M16.3 7.7l2.1-2.1"/></svg><span class="lf">ตั้งค่า & Export</span><span class="ls">ตั้งค่า</span></a>
   </nav>
   <div id="banner"></div>
   <main id="view"></main>
@@ -615,7 +698,7 @@ function vMonth(kind){
   const kinds = kind==='agenda' ? AGENDA_KINDS : LEAVE_KINDS;
   const [y,m] = cursorMonth.split('-').map(Number);
   const first = new Date(y, m-1, 1), start = new Date(first); start.setDate(1 - first.getDay());
-  const t = todayIso(); let cells='';
+  const t = todayIso(); let cells=''; const mlist = [];
   for (let i=0;i<42;i++){
     const d = new Date(start); d.setDate(start.getDate()+i); const s = isoOf(d);
     if (i>=35 && d.getMonth()!==m-1) break;
@@ -628,9 +711,14 @@ function vMonth(kind){
           <div class="aw">${show.map(id=>`<span class="awp">${avaHtml({id},'xs')}${ppl.length<=2?`<span class="nm">${esc(pname(id))}</span>`:''}</span>`).join('')}${ppl.length>5?`<span class="more">+${ppl.length-5}</span>`:''}</div></div>`); }
       else (e.people||[]).filter(p=>(!filterPerson||p===filterPerson) && isActive(S.staff[p], s)).forEach(p=>chips.push(`<div class="chip pchip" style="background:${T.bg};color:${T.fg}" data-ev="${esc(e.id)}" title="${esc(pname(p)+' – '+T.label)}">${avaHtml({id:p},'xs')}<span class="nm">${esc(pname(p))}</span><span class="kc">${esc(T.code)}</span></div>`));
     });
+    let mk = '';
+    if (kind==='agenda') mk = evs.slice(0,4).map(e=>`<i class="mdot" style="background:${(TYPES[e.type]||TYPES.other).fg}"></i>`).join('') + (evs.length>4?'<b>+</b>':'');
+    else { const ps = []; evs.forEach(e=>(e.people||[]).forEach(p=>{ if ((!filterPerson||p===filterPerson) && isActive(S.staff[p], s)) ps.push([p, e.type]); }));
+      mk = ps.slice(0,3).map(([p,k])=>`<span class="mface" style="box-shadow:0 0 0 2px ${TYPES[k].fg}">${avaHtml({id:p},'xs')}</span>`).join('') + (ps.length>3?`<b>+${ps.length-3}</b>`:''); }
+    if (d.getMonth()===m-1 && evs.length) mlist.push([s, evs]);
     cells += `<div class="day ${d.getMonth()!==m-1?'dim':''} ${isHol(s)?'hol':isWeekend(s)?'off':''} ${s===t?'today':''}" data-dayc="${s}">
       <div class="dnum">${d.getDate()}${isHol(s)?`<span class="h">${esc(S.holidays[s].name||'วันหยุด')}</span>`:''}</div>
-      ${chips.join('')}</div>`;
+      <div class="mk">${mk}</div>${chips.join('')}</div>`;
   }
   const opts = '<option value="">ทุกคน</option>'+staffActiveIn(...monthRange(cursorMonth)).map(p=>`<option value="${esc(p.id)}" ${p.id===filterPerson?'selected':''}>${esc(p.nick||shortName(p.name))}</option>`).join('');
   const title = kind==='agenda' ? 'ปฏิทินประชุม / นัดหมาย' : 'ปฏิทินวันลา';
@@ -640,7 +728,20 @@ function vMonth(kind){
     ${S.canWrite?`<button class="btn sm pri" data-quick="${kind==='agenda'?'meet':'vac'}">+ ${kind==='agenda'?'เพิ่มประชุม/นัดหมาย':'ลงวันลา'}</button>`:''}</div>
     ${legendHtml(kinds)}
     <div class="muted" style="font-size:13px;margin:-4px 0 8px">คลิกวันที่เพื่อดูรายละเอียดทั้งวัน · คลิกรายการเพื่อดูรายละเอียด</div>
-    <div class="mhead">${TH_D.map(x=>`<div>${x}</div>`).join('')}</div><div class="month">${cells}</div>`;
+    <div class="mhead">${TH_D.map(x=>`<div>${x}</div>`).join('')}</div><div class="month">${cells}</div>
+    <div class="mlist">${mlistHtml(kind, mlist, t)}</div>`;
+}
+function mlistHtml(kind, list, t){
+  if (!list.length) return '<div class="muted" style="text-align:center;padding:16px">ไม่มีรายการในเดือนนี้</div>';
+  return list.map(([s, evs]) => `<div class="mday ${s===t?'is-today':''} ${s<t?'past':''}"><div class="mdate" data-dayc="${s}"><b>${parse(s).getDate()}</b><span>${TH_D[parse(s).getDay()]}</span></div><div class="mitems">${
+    evs.map(e => { const T = TYPES[e.type]||TYPES.other;
+      const ppl = (e.people||[]).filter(p=>(!filterPerson||p===filterPerson) && (kind==='agenda' || isActive(S.staff[p], s)));
+      if (!ppl.length) return '';
+      return `<div class="mitem" data-ev="${esc(e.id)}" style="border-left-color:${T.fg}">
+        <div class="mt">${kind==='agenda' ? `${e.time?`<b>${esc(thT(e.time))}</b> `:''}${esc(e.title||T.label)}` : `<span style="color:${T.fg};font-weight:600">${T.label}</span>${e.title?' · '+esc(e.title):''}`}</div>
+        ${e.place?`<div class="ag-meta muted">${esc(e.place)}</div>`:''}
+        <div class="mw">${ppl.slice(0,6).map(id=>`<span class="who">${avaHtml({id},true)}${esc(pname(id))}</span>`).join('')}${ppl.length>6?`<span class="muted">+${ppl.length-6}</span>`:''}</div></div>`; }).join('')
+  }</div></div>`).join('');
 }
 function legendHtml(kinds){
   return `<div class="legend">${Object.entries(TYPES).filter(([k])=>!kinds||kinds.includes(k)).map(([k,T])=>`<span class="pill" style="background:${T.bg};color:${T.fg}">${T.emoji} ${T.label}${T.code?` <span class="kbd">${T.code}</span>`:''}</span>`).join('')}
@@ -696,6 +797,12 @@ function fyStats(pid, fy){
 function vSummary(){
   const fy = Number(lsGet('teamcal-fy')) || fyOf(todayIso());
   const [fa, fb] = fyRange(fy);
+  const cards = staffActiveIn(fa, fb).map(p=>{
+    const r = fyStats(p.id, fy), tot = vacTotal(p), left = tot - r.vac, pct = tot ? Math.min(100, Math.round(r.vac/tot*100)) : 0;
+    return `<div class="scard" data-person="${esc(p.id)}"><div class="nmw">${avaHtml(p)}<div style="flex:1;min-width:0"><b>${esc(p.nick||shortName(p.name))}</b> ${statusTag(p)}<div class="muted" style="font-size:12px">${esc(p.name||'')}</div></div><span class="muted">›</span></div>
+      <div class="svac"><span>พักผ่อนคงเหลือ</span><div class="bar"><i style="width:${pct}%"></i></div><b style="color:${left<=2?'#d6336c':'inherit'}">${left}</b><span class="muted">/ ${tot}</span></div>
+      <div class="sgrid"><div><b>${r.sick[0]}/${r.sick[1]}</b><span>ป่วย ครั้ง/วัน</span></div><div><b>${r.biz[0]}/${r.biz[1]}</b><span>กิจ ครั้ง/วัน</span></div><div><b>${r.vac}</b><span>พักผ่อนใช้</span></div><div><b>${r.late}</b><span>สาย</span></div><div><b>${r.trip}</b><span>รช</span></div><div><b>${r.wfh}</b><span>WFH</span></div></div></div>`;
+  }).join('');
   const rows = staffActiveIn(fa, fb).map(p=>{
     const r = fyStats(p.id, fy), tot = vacTotal(p), left = tot - r.vac;
     const pct = tot ? Math.min(100, Math.round(r.vac/tot*100)) : 0;
@@ -707,7 +814,8 @@ function vSummary(){
   const fys = []; for (let f=fyOf(todayIso())-1; f<=fyOf(todayIso())+1; f++) fys.push(f);
   return `<div class="daynav"><h2>สรุปวันลา ปีงบประมาณ</h2><select class="inp" style="width:auto" id="fySel">${fys.map(f=>`<option ${f===fy?'selected':''}>${f}</option>`).join('')}</select>
     <span class="muted" style="font-size:13px">(1 ต.ค. ${fy-1} – 30 ก.ย. ${fy}) · นับเฉพาะวันทำการ ยกเว้นไปราชการ/อบรมนับทุกวัน</span></div>
-    <div class="card" style="overflow:auto"><table class="sum"><thead><tr><th style="text-align:left">ชื่อ</th><th>ป่วย<br><small>ครั้ง / วัน</small></th><th>กิจ<br><small>ครั้ง / วัน</small></th><th>พักผ่อน<br><small>ใช้ไป (วัน)</small></th><th>คงเหลือพักผ่อน<br><small>สะสม (ไม่เกินเพดาน) − ที่ใช้</small></th><th>สาย<br><small>ครั้ง</small></th><th>รช<br><small>วัน</small></th><th>อบรม<br><small>วัน</small></th><th>WFH<br><small>วัน</small></th></tr></thead>
+    <div class="scards">${cards}</div>
+    <div class="card sumwrap" style="overflow:auto"><table class="sum"><thead><tr><th style="text-align:left">ชื่อ</th><th>ป่วย<br><small>ครั้ง / วัน</small></th><th>กิจ<br><small>ครั้ง / วัน</small></th><th>พักผ่อน<br><small>ใช้ไป (วัน)</small></th><th>คงเหลือพักผ่อน<br><small>สะสม (ไม่เกินเพดาน) − ที่ใช้</small></th><th>สาย<br><small>ครั้ง</small></th><th>รช<br><small>วัน</small></th><th>อบรม<br><small>วัน</small></th><th>WFH<br><small>วัน</small></th></tr></thead>
     <tbody>${rows || '<tr><td colspan="9" class="empty">ยังไม่มีรายชื่อ</td></tr>'}</tbody></table></div>`;
 }
 
