@@ -199,6 +199,18 @@ label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--so
 .achip .aw{display:flex;flex-wrap:wrap;gap:2px 6px;margin-top:2px;align-items:center}
 .achip .awp{display:inline-flex;align-items:center;gap:3px;color:var(--ink);font-size:11px}
 .achip .pic.xs{width:18px;height:18px}
+.lgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media (max-width:520px){.lgrid{grid-template-columns:1fr}}
+.lcard{background:var(--bg);border-radius:12px;padding:10px 12px;font-size:14px}
+.lk{cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px}
+.lstat{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px}
+.lstat div{background:var(--bg);border-radius:12px;padding:8px;text-align:center}
+.lstat b{display:block;font-size:18px}
+.lstat span{font-size:11.5px;color:var(--soft)}
+.tg .nm{cursor:pointer}
+.tg .nm:hover{color:#c2416b}
+.tg td.na{background:repeating-linear-gradient(45deg,#f4efea,#f4efea 4px,#fbf8f5 4px,#fbf8f5 8px);cursor:default}
+.tg td.na:hover{outline:none}
 .kbd{font-weight:700}
 </style>
 </head>
@@ -457,7 +469,7 @@ const S = { staff:{}, events:{}, holidays:{}, ready:{staff:false,events:false,ho
 let SHEET_URL = '';
 let view = 'today', cursorDay = todayIso(), cursorMonth = todayIso().slice(0,7), filterPerson = '';
 // URL ของ Apps Script Web App (Deploy > Web app > /exec)
-const API_URL = 'https://script.google.com/macros/s/AKfycbx6uA0BCCK86FK4Vdd9n62R3xiOgCGM_E77SY3GHoiDkL3o19ex1gV7q8p4BWpX7ePYsA/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbwv16nFYEuuBCLYmit9b5eKacIxo_R53J1IQK2oDlF7zJwvNFEKNHZDV62JahBpuhrD1A/exec';
 async function api(payload){
   const r = payload
     ? await fetch(API_URL, {method:'POST', body: JSON.stringify(payload)})   // text/plain: ไม่ต้อง preflight
@@ -488,6 +500,12 @@ async function guard(p){ try { await p; return true; } catch(e){ console.error(e
   toast('บันทึกไม่สำเร็จ: ' + ((e && e.message) || 'ลองอีกครั้ง')); loadAll(); return false; } }
 
 /* ================= derived ================= */
+const isActive = (p, s) => !p || ((!p.joined || s >= p.joined) && (!p.left || s < p.left));
+const activeIn = (p, a, b) => (!p.joined || p.joined <= b) && (!p.left || p.left > a);
+const monthRange = ym => { const [y,m] = ym.split('-').map(Number); return [ym+'-01', ym+'-'+pad(new Date(y,m,0).getDate())]; };
+const staffActiveIn = (a, b) => staffList().filter(p => activeIn(p, a, b));
+const staffActiveOn = s => staffList().filter(p => isActive(p, s));
+const statusTag = p => p.left ? `<span class="pill" style="background:#eee;color:#666;font-size:11.5px">ออกจากกลุ่ม ${thDate(p.left)}</span>` : (p.joined && p.joined > todayIso() ? `<span class="pill" style="background:var(--mint2);color:#2b6b4c;font-size:11.5px">เข้ากลุ่ม ${thDate(p.joined)}</span>` : '');
 const staffList = () => Object.entries(S.staff).map(([id,s])=>({id,...s}))
   .sort((a,b)=> (GROUPS.indexOf(a.group||GROUPS[0]) - GROUPS.indexOf(b.group||GROUPS[0])) || ((a.order??999)-(b.order??999)) || String(a.name).localeCompare(String(b.name),'th'));
 const evList = () => Object.entries(S.events).map(([id,e])=>({id,...e}));
@@ -508,6 +526,7 @@ function eventsOn(s, personId){
 }
 function workDays(start, end){ let n=0, s=start; while (s<=end){ if(!isOff(s)) n++; s=addDays(s,1); if(n>400) break; } return n; }
 function codeFor(personId, s, opts){
+  if (!isActive(S.staff[personId], s)) return '';
   const evs = eventsOn(s, personId);
   for (const k of LEAVE_ORDER){
     if (k==='meet' && !opts.meet) continue;
@@ -542,7 +561,7 @@ function render(){
 }
 function renderMe(){
   const sel = $('#meSel'); const me = lsGet('teamcal-me') || '';
-  const html = '<option value="">ผู้ใช้งาน: เลือกชื่อ</option>' + staffList().map(p=>`<option value="${esc(p.id)}" ${p.id===me?'selected':''}>${esc(p.nick||shortName(p.name))}</option>`).join('');
+  const html = '<option value="">ผู้ใช้งาน: เลือกชื่อ</option>' + staffList().filter(p=>isActive(p, todayIso()) || p.id===me).map(p=>`<option value="${esc(p.id)}" ${p.id===me?'selected':''}>${esc(p.nick||shortName(p.name))}</option>`).join('');
   if (sel.innerHTML !== html) sel.innerHTML = html;
 }
 function personTag(id){ const p=S.staff[id]; return `<span>${esc(pname(id))}</span>`; }
@@ -607,13 +626,13 @@ function vMonth(kind){
         chips.push(`<div class="chip achip" style="background:${T.bg};color:${T.fg}" data-ev="${esc(e.id)}" title="${esc((e.time?thT(e.time)+' น. ':'')+(e.title||T.label)+(e.place?' @ '+e.place:'')+' — '+ppl.map(pname).join(', '))}">
           <div class="at">${e.time?`<b>${esc(thT(e.time))}</b> `:T.emoji+' '}<span class="nm">${esc(e.title||T.label)}</span></div>
           <div class="aw">${show.map(id=>`<span class="awp">${avaHtml({id},'xs')}${ppl.length<=2?`<span class="nm">${esc(pname(id))}</span>`:''}</span>`).join('')}${ppl.length>5?`<span class="more">+${ppl.length-5}</span>`:''}</div></div>`); }
-      else (e.people||[]).filter(p=>!filterPerson||p===filterPerson).forEach(p=>chips.push(`<div class="chip pchip" style="background:${T.bg};color:${T.fg}" data-ev="${esc(e.id)}" title="${esc(pname(p)+' – '+T.label)}">${avaHtml({id:p},'xs')}<span class="nm">${esc(pname(p))}</span><span class="kc">${esc(T.code)}</span></div>`));
+      else (e.people||[]).filter(p=>(!filterPerson||p===filterPerson) && isActive(S.staff[p], s)).forEach(p=>chips.push(`<div class="chip pchip" style="background:${T.bg};color:${T.fg}" data-ev="${esc(e.id)}" title="${esc(pname(p)+' – '+T.label)}">${avaHtml({id:p},'xs')}<span class="nm">${esc(pname(p))}</span><span class="kc">${esc(T.code)}</span></div>`));
     });
     cells += `<div class="day ${d.getMonth()!==m-1?'dim':''} ${isHol(s)?'hol':isWeekend(s)?'off':''} ${s===t?'today':''}" data-dayc="${s}">
       <div class="dnum">${d.getDate()}${isHol(s)?`<span class="h">${esc(S.holidays[s].name||'วันหยุด')}</span>`:''}</div>
       ${chips.join('')}</div>`;
   }
-  const opts = '<option value="">ทุกคน</option>'+staffList().map(p=>`<option value="${esc(p.id)}" ${p.id===filterPerson?'selected':''}>${esc(p.nick||shortName(p.name))}</option>`).join('');
+  const opts = '<option value="">ทุกคน</option>'+staffActiveIn(...monthRange(cursorMonth)).map(p=>`<option value="${esc(p.id)}" ${p.id===filterPerson?'selected':''}>${esc(p.nick||shortName(p.name))}</option>`).join('');
   const title = kind==='agenda' ? 'ปฏิทินประชุม / นัดหมาย' : 'ปฏิทินวันลา';
   return `<div class="daynav"><button class="round" data-mon="-1">‹</button><h2>${title} · ${TH_M[m-1]} ${y+543}</h2><button class="round" data-mon="1">›</button>
     <button class="btn sm" data-mon="0">เดือนนี้</button><div class="spacer"></div>
@@ -635,22 +654,23 @@ function vTeam(){
   for (let d=1; d<=n; d++){ const s = y+'-'+pad(m)+'-'+pad(d);
     head += `<th class="${isHol(s)?'hol':isWeekend(s)?'off':''} ${s===t?'today':''}" title="${isHol(s)?esc(S.holidays[s].name):''}">${d}<small>${TH_D[parse(s).getDay()]}</small></th>`; }
   let body=''; let lastG=null;
-  for (const p of staffList()){
+  for (const p of staffActiveIn(...monthRange(cursorMonth))){
     const g = p.group||GROUPS[0];
     if (g!==lastG){ body += `<tr class="grp"><td colspan="${n+1}">${esc(g)}</td></tr>`; lastG=g; }
-    let row = `<td class="nm"><span class="nmw">${avaHtml(p,true)}${esc(p.nick||shortName(p.name))}</span></td>`;
+    let row = `<td class="nm" data-person="${esc(p.id)}" title="ดูประวัติการลา"><span class="nmw">${avaHtml(p,true)}${esc(p.nick||shortName(p.name))}${p.left?'<small class="muted">(ออก)</small>':''}</span></td>`;
     for (let d=1; d<=n; d++){ const s = y+'-'+pad(m)+'-'+pad(d);
       const c = codeFor(p.id, s, opts);
       const k = c ? Object.keys(TYPES).find(k=>TYPES[k].code===c) : null;
       const T = k ? TYPES[k] : null;
       const tasks = eventsOn(s,p.id).filter(e=>e.type==='task'||e.type==='other'||(e.type==='meet'&&!opts.meet));
       const inner = c==='P' ? '<span class="code" style="color:#2b8a3e">✓</span>' : T ? `<span class="code" style="background:${T.bg};color:${T.fg}">${esc(c)}</span>` : '';
+      if (!isActive(p, s)) { row += '<td class="na" title="ไม่ได้อยู่ในกลุ่ม"></td>'; continue; }
       row += `<td class="${isHol(s)?'hol':isWeekend(s)?'off':''}" data-cell="${esc(p.id)}|${s}" title="${esc(eventsOn(s,p.id).map(e=>(TYPES[e.type]||TYPES.other).label+(e.title?': '+e.title:'')).join('\n'))}">${inner}${tasks.length?'<sup>•</sup>':''}</td>`; }
     body += `<tr>${row}</tr>`;
   }
   return `<div class="daynav"><button class="round" data-mon="-1">‹</button><h2>${TH_M[m-1]} ${y+543}</h2><button class="round" data-mon="1">›</button>
     <button class="btn sm" data-mon="0">เดือนนี้</button><div class="spacer"></div>
-    <span class="muted" style="font-size:13px">✓ = มาปฏิบัติงาน (เติมให้อัตโนมัติวันทำการที่ผ่านมา) · • = มีนัด/งานส่ง · คลิกช่องเพื่อลงรายการ</span></div>
+    <span class="muted" style="font-size:13px">✓ = มาปฏิบัติงาน (เติมให้อัตโนมัติวันทำการที่ผ่านมา) · • = มีนัด/งานส่ง · คลิกชื่อเพื่อดูวันลาล่าสุด · คลิกช่องเพื่อลงรายการ</span></div>
     ${legendHtml()}
     <div class="tgwrap"><table class="tg"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
 }
@@ -675,10 +695,11 @@ function fyStats(pid, fy){
 }
 function vSummary(){
   const fy = Number(lsGet('teamcal-fy')) || fyOf(todayIso());
-  const rows = staffList().map(p=>{
+  const [fa, fb] = fyRange(fy);
+  const rows = staffActiveIn(fa, fb).map(p=>{
     const r = fyStats(p.id, fy), tot = vacTotal(p), left = tot - r.vac;
     const pct = tot ? Math.min(100, Math.round(r.vac/tot*100)) : 0;
-    return `<tr><td class="l"><div class="nmw">${avaHtml(p)}<div>${esc(p.nick||shortName(p.name))}<div class="muted" style="font-size:12px">${esc(p.name||'')}</div></div></div></td>
+    return `<tr><td class="l" data-person="${esc(p.id)}" title="ดูประวัติการลา" style="cursor:pointer"><div class="nmw">${avaHtml(p)}<div>${esc(p.nick||shortName(p.name))} ${statusTag(p)}<div class="muted" style="font-size:12px">${esc(p.name||'')}</div></div></div></td>
       <td>${r.sick[0]} / <b>${r.sick[1]}</b></td><td>${r.biz[0]} / <b>${r.biz[1]}</b></td><td><b>${r.vac}</b></td>
       <td><div class="row" style="justify-content:center;gap:6px"><div class="bar" title="ใช้ไป ${pct}%"><i style="width:${pct}%"></i></div><b style="color:${left<=2?'#d6336c':'inherit'}">${left}</b><span class="muted" style="font-size:12px">/ ${tot}</span></div></td>
       <td>${r.late}</td><td>${r.trip}</td><td>${r.train}</td><td>${r.wfh}</td></tr>`;
@@ -691,10 +712,12 @@ function vSummary(){
 }
 
 function vSettings(){
-  const ppl = staffList();
-  const staffHtml = ppl.map(p=>`<div class="li">${avaHtml(p)}
-    <div class="grow">${esc(p.name)}${p.nick?` <span class="muted">(${esc(p.nick)})</span>`:''}<small>${esc(p.group||GROUPS[0])} · ${esc(p.position||'-')} · พักผ่อน ยกมา ${Number(p.carry)||0} + ปีนี้ ${Number(p.quota)||0} = ${vacTotal(p)} (เพดาน ${capOf(p)})</small></div>
-    ${S.canWrite?`<button class="ic" data-edit-staff="${esc(p.id)}" title="แก้ไข">แก้ไข</button>`:''}</div>`).join('') || '<div class="muted">ยังไม่มีรายชื่อ</div>';
+  const ppl = staffList(), t0 = todayIso();
+  const staffRow = p=>`<div class="li">${avaHtml(p)}
+    <div class="grow">${esc(p.name)}${p.nick?` <span class="muted">(${esc(p.nick)})</span>`:''}<small>${esc(p.group||GROUPS[0])} · ${esc(p.position||'-')}${p.left?' · ออกจากกลุ่ม '+thDate(p.left):''}${p.joined?' · เข้ากลุ่ม '+thDate(p.joined):''} · พักผ่อน ยกมา ${Number(p.carry)||0} + ปีนี้ ${Number(p.quota)||0} = ${vacTotal(p)} (เพดาน ${capOf(p)})</small></div>
+    ${S.canWrite?`<button class="ic" data-edit-staff="${esc(p.id)}" title="แก้ไข">แก้ไข</button>`:''}</div>`;
+  const cur = ppl.filter(p=>!p.left || p.left > t0), gone = ppl.filter(p=>p.left && p.left <= t0);
+  const staffHtml = (cur.map(staffRow).join('') || '<div class="muted">ยังไม่มีรายชื่อ</div>') + (gone.length ? `<div class="muted" style="font-size:13px;margin:10px 0 2px">ออกจากกลุ่มแล้ว (${gone.length})</div>` + gone.map(staffRow).join('') : '');
   const hols = Object.entries(S.holidays).sort((a,b)=>a[0].localeCompare(b[0])).filter(([d])=>d>=addDays(todayIso(),-400));
   const holHtml = hols.map(([d,h])=>`<div class="li"><div class="grow">${thDate(d)} <small>${esc(h.name||'')}</small></div>${S.canWrite?`<button class="ic" data-del-hol="${d}" title="ลบ">ลบ</button>`:''}</div>`).join('') || '<div class="muted">ยังไม่มีวันหยุด</div>';
   const autop = lsGet('teamcal-autop')!=='0', meet = lsGet('teamcal-meet')==='1';
@@ -745,7 +768,7 @@ function drawEvent(){
   openModal(`<h2>${M.id?'แก้ไขรายการ':'ลงรายการใหม่'}</h2>
     <div class="types">${Object.entries(TYPES).map(([k,t])=>`<button class="tbtn ${k===M.type?'on':''}" style="background:${t.bg};color:${t.fg}" data-type="${k}" ${ro?'disabled':''}><b>${t.emoji}</b>${t.label}</button>`).join('')}</div>
     <label class="f" style="margin-bottom:6px">ใคร ${M.type==='meet'||M.type==='other'||M.type==='task'?'(เลือกได้หลายคน)':''}</label>
-    <div class="ppl" style="margin-bottom:12px">${staffList().map(p=>`<button class="pp ${M.people.includes(p.id)?'on':''}" data-pp="${esc(p.id)}" ${ro?'disabled':''}>${avaHtml(p,true)}${esc(p.nick||shortName(p.name))}</button>`).join('') || '<span class="muted">ยังไม่มีรายชื่อ — เพิ่มที่แท็บตั้งค่า</span>'}</div>
+    <div class="ppl" style="margin-bottom:12px">${staffList().filter(p=>isActive(p, M.start) || M.people.includes(p.id)).map(p=>`<button class="pp ${M.people.includes(p.id)?'on':''}" data-pp="${esc(p.id)}" ${ro?'disabled':''}>${avaHtml(p,true)}${esc(p.nick||shortName(p.name))}</button>`).join('') || '<span class="muted">ยังไม่มีรายชื่อ — เพิ่มที่แท็บตั้งค่า</span>'}</div>
     <div class="fr">
       <label class="f">${T.task?'กำหนดส่ง':T.single?'วันที่':'ตั้งแต่วันที่'}<input type="date" class="inp" id="mStart" value="${M.start}" ${ro?'disabled':''}></label>
       ${T.single?'<div></div>':`<label class="f">ถึงวันที่<input type="date" class="inp" id="mEnd" value="${M.end||M.start}" ${ro?'disabled':''}></label>`}
@@ -795,9 +818,12 @@ function openStaff(id){
       <label class="f">ลำดับในกลุ่ม<input type="number" class="inp" id="sOrder" value="${esc(p.order??'')}"></label></div>
     <div class="fr" style="margin-top:10px"><label class="f">วันลาพักผ่อนคงเหลือยกมา (ปีก่อน)<input type="number" step="0.5" class="inp" id="sCarry" value="${esc(p.carry??0)}"></label>
       <label class="f">สิทธิ์ลาพักผ่อนปีนี้<input type="number" step="0.5" class="inp" id="sQuota" value="${esc(p.quota??10)}"></label></div>
+    <div class="fr" style="margin-top:10px"><label class="f">วันที่เข้ากลุ่ม (ไม่ใส่ก็ได้)<input type="date" class="inp" id="sJoined" value="${esc(p.joined||'')}"></label>
+      <label class="f">วันที่ออกจากกลุ่ม (ตั้งแต่วันนี้ไม่อยู่แล้ว)<input type="date" class="inp" id="sLeft" value="${esc(p.left||'')}"></label></div>
+    <div class="muted" style="font-size:12.5px;margin-top:4px">คนที่ย้ายออก ให้ใส่วันที่ออกแทนการลบ ประวัติการลาจะยังอยู่ และจะไม่แสดงในตาราง/ปฏิทินหลังวันที่ออก</div>
     <label class="f" style="margin-top:10px">เพดานวันลาพักผ่อนสะสม (ยกมา + ปีนี้ รวมกันไม่เกิน)
       <select class="inp" id="sCap">${[[20,'20 วันทำการ — รับราชการไม่ถึง 10 ปี'],[30,'30 วันทำการ — รับราชการต่อเนื่อง 10 ปีขึ้นไป']].concat([10,15].map(n=>[n,n+' วันทำการ'])).map(([v,t])=>`<option value="${v}" ${capOf(p)===v?'selected':''}>${t}</option>`).join('')}</select></label>
-    <div class="mfoot"><div class="left">${id?'<button class="btn danger" id="sDel">ลบคนนี้</button>':''}</div>
+    <div class="mfoot"><div class="left">${id?'<button class="btn danger" id="sDel">ลบถาวร</button>':''}</div>
       <button class="btn ghost" id="mCancel">ยกเลิก</button><button class="btn pri" id="sSave">บันทึก</button></div>`);
   $('#modal').dataset.staff = id || '';
   $('#modal').dataset.ava = p.emoji || '';
@@ -846,13 +872,49 @@ function openDay(s){
     <div class="mfoot"><button class="btn ghost" id="mCancel">ปิด</button>${S.canWrite?`<button class="btn pri" data-add-day="${s}">+ ลงรายการวันนี้</button>`:''}</div>`);
 }
 
+
+/* ================= person leave popup ================= */
+const PERSON_KINDS = ['vac','sick','biz','study','trip','train','wfh','late'];
+function daysAgo(s){ const n = Math.round((parse(todayIso()) - parse(s)) / 864e5); return n===0 ? 'วันนี้' : n===1 ? 'เมื่อวาน' : n>0 ? `${n} วันที่แล้ว` : `อีก ${-n} วัน`; }
+function leaveSpan(e){ const T = TYPES[e.type]; const wd = T.weekend ? null : workDays(e.start, e.end||e.start);
+  return `${esc(rangeTxt(e))}${wd!=null?` <span class="muted">(${wd} วันทำการ)</span>`:''}`; }
+function openPerson(pid){
+  const p = S.staff[pid]; if (!p) return;
+  const t = todayIso();
+  const evs = evList().filter(e => (e.people||[]).includes(pid) && PERSON_KINDS.includes(e.type));
+  const lastOf = k => evs.filter(e=>e.type===k && e.start<=t).sort((a,b)=>(b.end||b.start).localeCompare(a.end||a.start))[0];
+  const nextOf = k => evs.filter(e=>e.type===k && e.start>t).sort((a,b)=>a.start.localeCompare(b.start))[0];
+  const card = (k, label) => { const T = TYPES[k], l = lastOf(k), n = nextOf(k);
+    return `<div class="lcard" style="border-left:4px solid ${T.fg}">
+      <div class="row" style="justify-content:space-between"><b style="color:${T.fg}">${T.emoji} ${label}</b>${l?`<span class="pill" style="background:${T.bg};color:${T.fg}">${daysAgo(l.end||l.start)}</span>`:''}</div>
+      <div style="margin-top:4px">${l ? `<span class="lk" data-ev="${esc(l.id)}">${leaveSpan(l)}</span>` : '<span class="muted">ยังไม่มีข้อมูล</span>'}</div>
+      ${n?`<div class="muted" style="font-size:13px;margin-top:2px">ครั้งถัดไป: <span class="lk" data-ev="${esc(n.id)}">${leaveSpan(n)}</span></div>`:''}</div>`; };
+  const fy = fyOf(t), r = fyStats(pid, fy), tot = vacTotal(p);
+  const hist = evs.filter(e=>!['late','wfh'].includes(e.type)).sort((a,b)=>b.start.localeCompare(a.start)).slice(0,12);
+  openModal(`<div class="nmw" style="gap:12px;margin-bottom:12px">${avaHtml(p)}<div><h2 style="margin:0">${esc(p.name)}</h2><div class="muted" style="font-size:13px">${esc(p.position||'')} · ${esc(p.group||GROUPS[0])} ${statusTag(p)}</div></div></div>
+    <div class="lgrid">${card('vac','ลาพักผ่อนล่าสุด')}${card('sick','ลาป่วยล่าสุด')}${card('biz','ลากิจล่าสุด')}${card('trip','ไปราชการล่าสุด')}</div>
+    <h3 class="dsec">ปีงบประมาณ ${fy}</h3>
+    <div class="lstat">
+      <div><b>${r.vac}</b><span>พักผ่อนใช้ไป (วัน)</span></div>
+      <div><b style="color:${tot-r.vac<=2?'#d6336c':'inherit'}">${tot - r.vac}</b><span>พักผ่อนคงเหลือ / ${tot}</span></div>
+      <div><b>${r.sick[0]} / ${r.sick[1]}</b><span>ป่วย ครั้ง / วัน</span></div>
+      <div><b>${r.biz[0]} / ${r.biz[1]}</b><span>กิจ ครั้ง / วัน</span></div>
+      <div><b>${r.late}</b><span>มาสาย (ครั้ง)</span></div>
+    </div>
+    <h3 class="dsec">ประวัติการลา / ไปราชการ ล่าสุด</h3>
+    ${hist.map(e=>{ const T=TYPES[e.type]; return `<div class="dline" data-ev="${esc(e.id)}"><span class="pill" style="background:${T.bg};color:${T.fg};flex:none">${T.emoji} ${T.label}</span><div style="flex:1">${leaveSpan(e)}${e.title?`<div class="ag-meta">${esc(e.title)}</div>`:''}</div><span class="muted" style="font-size:12.5px;white-space:nowrap">${daysAgo(e.start)}</span></div>`; }).join('') || '<div class="muted" style="font-size:14px">ยังไม่มีประวัติ</div>'}
+    <div class="mfoot"><button class="btn ghost" id="mCancel">ปิด</button>${S.canWrite?`<button class="btn pri" data-add-person-leave="${esc(pid)}">+ ลงวันลา</button>`:''}</div>`);
+}
+
 /* ================= events (delegated) ================= */
 document.addEventListener('click', async ev=>{
-  const t = ev.target.closest('button, [data-ev], [data-dayc], [data-cell], a');
+  const t = ev.target.closest('button, [data-ev], [data-dayc], [data-cell], [data-person], a');
   if (!t) return;
   const d = t.dataset;
   if (d.done !== undefined && t.dataset.done) { const e = S.events[d.done]; if (!e || !S.canWrite) return;
     await guard(store.set('events', d.done, {...e, done: !e.done, updatedAt:new Date().toISOString()})); return; }
+  if (d.person) { DETAIL_DAY = null; openPerson(d.person); return; }
+  if (d.addPersonLeave) { openEvent(null, {person: d.addPersonLeave, type:'vac', date: todayIso()}); return; }
   if (d.editEv) { openEvent(d.editEv); return; }
   if (t.id==='dBack') { openDay(DETAIL_DAY); return; }
   if (d.addDay) { const s0 = d.addDay; DETAIL_DAY = null; openEvent(null, {date:s0, type: view==='agenda'?'meet':view==='leave'?'vac':'meet'}); return; }
@@ -876,7 +938,7 @@ document.addEventListener('click', async ev=>{
     const id = $('#modal').dataset.staff || uid(); const name = $('#sName').value.trim();
     if (!name) return toast('ใส่ชื่อก่อนนะ');
     const data = {name, nick: $('#sNick').value.trim(), position: $('#sPos').value.trim(), group: $('#sGroup').value,
-      order: Number($('#sOrder').value)||999, carry: Number($('#sCarry').value)||0, quota: Number($('#sQuota').value)||0, cap: Number($('#sCap').value)||20, emoji: $('#modal').dataset.ava || ''};
+      order: Number($('#sOrder').value)||999, carry: Number($('#sCarry').value)||0, quota: Number($('#sQuota').value)||0, cap: Number($('#sCap').value)||20, joined: $('#sJoined').value||'', left: $('#sLeft').value||'', emoji: $('#modal').dataset.ava || ''};
     closeModal(); if (await guard(store.set('staff', id, data))) toast('บันทึกรายชื่อแล้ว'); return; }
   if (t.id==='sDel') { if (t.dataset.sure) { const id=$('#modal').dataset.staff; closeModal(); if (await guard(store.del('staff', id))) toast('ลบรายชื่อแล้ว'); } else { t.dataset.sure='1'; t.textContent='กดอีกครั้งเพื่อยืนยัน'; } return; }
   if (t.id==='addHol') { const dt=$('#hDate').value, nm=$('#hName').value.trim(); if(!dt) return toast('เลือกวันที่ก่อนนะ');
@@ -912,9 +974,10 @@ async function doExport(){
   try {
     await ensureLibs();
     const cutoff = $('#xCut').value || todayIso(), opts = {autoP: $('#xAutoP').checked, meet: $('#xMeet').checked, cutoff};
-    const [a,b] = fyRange(2570); const staff = staffList(); const codes = {};
+    const [a,b] = fyRange(2570); const staff = staffActiveIn(a, b); const codes = {}, notes = {};
+    staff.forEach(p=>{ const n = []; if (p.joined && p.joined > a) n.push('เข้ากลุ่ม ' + thDate(p.joined)); if (p.left && p.left <= b) n.push('ออกจากกลุ่ม ' + thDate(p.left)); if (n.length) notes[p.id] = n.join(', '); });
     for (const p of staff){ const m = codes[p.id] = {}; for (let s=a; s<=b; s=addDays(s,1)){ const c = codeFor(p.id, s, opts); if (c) m[s]=c; } }
-    const buf = await TeamExport.fillTemplate(ExcelJS, TPL_B64.slice(0), {staff, codes, holidays: Object.keys(S.holidays)});
+    const buf = await TeamExport.fillTemplate(ExcelJS, TPL_B64.slice(0), {staff, codes, notes, holidays: Object.keys(S.holidays)});
     const fname = `บัญชีสรุปการมาปฏิบัติราชการ_ปีงบ2570_ถึง${cutoff}.xlsx`;
         const blob = new Blob([buf], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
     const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = fname;
