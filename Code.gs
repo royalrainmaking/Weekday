@@ -15,7 +15,7 @@ const SH_HOL = 'วันหยุด';
 
 const EV_HEAD = ['รหัสรายการ', 'ประเภท', 'รหัสในบัญชีลงเวลา', 'วันที่เริ่ม', 'วันที่สิ้นสุด', 'เวลาเริ่ม', 'เวลาสิ้นสุด',
   'เรื่อง', 'สถานที่', 'ผู้เกี่ยวข้อง', 'สถานะงานส่ง', 'หมายเหตุ', 'บันทึกล่าสุด', 'รหัสผู้เกี่ยวข้อง', 'ชนิด', 'ผู้บันทึก'];
-const ST_HEAD = ['รหัส', 'ชื่อ-สกุล', 'ชื่อเล่น', 'ตำแหน่ง', 'กลุ่ม', 'ลำดับในกลุ่ม', 'วันลาพักผ่อนยกมา', 'สิทธิ์ลาพักผ่อนปีนี้', 'รวมวันลาพักผ่อน'];
+const ST_HEAD = ['รหัส', 'ชื่อ-สกุล', 'ชื่อเล่น', 'ตำแหน่ง', 'กลุ่ม', 'ลำดับในกลุ่ม', 'วันลาพักผ่อนยกมา', 'สิทธิ์ลาพักผ่อนปีนี้', 'รวมวันลาพักผ่อน (ไม่เกินเพดาน)', 'เพดานวันลาสะสม'];
 const HO_HEAD = ['วันที่', 'ชื่อวันหยุด'];
 
 const TYPES = {
@@ -96,7 +96,7 @@ function getAll() {
   const staff = {}, events = {}, holidays = {};
   rows_(sheet_(SH_STAFF, ST_HEAD), ST_HEAD.length).forEach(r => {
     if (!r[0]) return;
-    staff[r[0]] = { name: r[1], nick: r[2], position: r[3], group: r[4] || GROUPS[0], order: num_(r[5]) || 999, carry: num_(r[6]), quota: num_(r[7]) };
+    staff[r[0]] = { name: r[1], nick: r[2], position: r[3], group: r[4] || GROUPS[0], order: num_(r[5]) || 999, carry: num_(r[6]), quota: num_(r[7]), cap: num_(r[9]) || 20 };
   });
   rows_(sheet_(SH_EVENTS, EV_HEAD), EV_HEAD.length).forEach(r => {
     if (!r[0]) return;
@@ -168,8 +168,9 @@ function saveStaff_(id, d) {
   if (r < 0) r = sh.getLastRow() + 1;
   sh.getRange(r, 1, 1, 5).setNumberFormat('@')
     .setValues([[id, name, txt_(d.nick, 60), txt_(d.position, 160), GROUPS.indexOf(d.group) >= 0 ? d.group : GROUPS[0]]]);
-  sh.getRange(r, 6, 1, 4).setNumberFormat('0.##')
-    .setValues([[num_(d.order) || 999, num_(d.carry), num_(d.quota), '=G' + r + '+H' + r]]);
+  const cap = [10, 15, 20, 30].indexOf(num_(d.cap)) >= 0 ? num_(d.cap) : 20;
+  sh.getRange(r, 6, 1, 5).setNumberFormat('0.##')
+    .setValues([[num_(d.order) || 999, num_(d.carry), num_(d.quota), '=MIN(G' + r + '+H' + r + ',J' + r + ')', cap]]);
   refreshNames_();
 }
 
