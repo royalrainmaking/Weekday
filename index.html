@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ปฏิทินงานทีม</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#fff7ef; --paper:#ffffff; --ink:#4a3b52; --soft:#8a7a93; --line:#f0e3d8;
+  --pink:#ff8fab; --pink2:#ffe0e9; --mint:#8fd9b6; --mint2:#e3f7ec; --sky:#8ec5ff; --sky2:#e5f1ff;
+  --lemon:#ffd166; --lemon2:#fff4cf; --lav:#b8a4ff; --lav2:#efeaff; --off:#f6efe8; --hol:#ffe9d6;
+  --r:12px; --shadow:0 1px 2px rgba(74,59,82,.06), 0 4px 14px rgba(74,59,82,.06);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 "IBM Plex Sans Thai",system-ui,sans-serif;
+  min-height:100vh}
+h1,h2,h3,.mali{font-family:"IBM Plex Sans Thai",sans-serif;font-weight:600}
+button{font:inherit;color:inherit;cursor:pointer}
+input,select,textarea{font:inherit;color:inherit}
+.wrap{max-width:1240px;margin:0 auto;padding:18px 18px 60px}
+
+/* header */
+header.top{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.logo{display:flex;align-items:center;gap:10px}
+.logo h1{margin:0;font-size:26px;letter-spacing:.2px}
+.logo small{display:block;color:var(--soft);font-size:13px;margin-top:-4px}
+.sun{width:46px;height:46px;flex:none}
+.spacer{flex:1}
+.btn{border:0;border-radius:999px;padding:9px 16px;background:var(--paper);box-shadow:var(--shadow);font-weight:600;display:inline-flex;align-items:center;gap:6px;transition:transform .12s}
+.btn:hover{transform:translateY(-1px)}
+.btn:active{transform:translateY(1px)}
+.btn.pri{background:var(--pink);color:#fff}
+.btn.mint{background:var(--mint);color:#1f4b37}
+.btn.ghost{background:transparent;box-shadow:none;border:2px dashed var(--line)}
+.btn.sm{padding:6px 12px;font-size:13px}
+.btn.danger{background:#ffd6d6;color:#9b2c2c}
+.btn[disabled]{opacity:.5;pointer-events:none}
+
+nav.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 18px;background:var(--paper);padding:6px;border-radius:999px;box-shadow:var(--shadow);width:max-content;max-width:100%;overflow-x:auto}
+nav.tabs a{padding:8px 16px;border-radius:999px;text-decoration:none;color:var(--soft);font-weight:600;white-space:nowrap}
+nav.tabs a.on{background:var(--pink2);color:#c2416b}
+
+.banner{background:var(--lemon2);border:2px dashed var(--lemon);padding:10px 14px;border-radius:14px;margin-bottom:14px;font-size:14px}
+.banner.err{background:#ffe3e3;border-color:#ffa8a8}
+.card{background:var(--paper);border-radius:var(--r);box-shadow:var(--shadow);padding:16px}
+.muted{color:var(--soft)}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.grid2{display:grid;grid-template-columns:minmax(0,2.1fr) minmax(280px,1fr);gap:18px}
+@media (max-width:900px){.grid2{grid-template-columns:1fr}}
+
+/* day nav */
+.daynav{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.daynav h2{margin:0 6px;font-size:22px}
+.round{width:36px;height:36px;border-radius:50%;border:0;background:var(--paper);box-shadow:var(--shadow);font-size:18px;display:grid;place-items:center}
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 10px;font-size:13px;font-weight:600;white-space:nowrap}
+
+/* people cards */
+.people{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+.pcard{background:var(--paper);border-radius:var(--r);box-shadow:var(--shadow);padding:14px;position:relative;overflow:hidden;border-top:6px solid var(--mint)}
+.pcard.away{border-top-color:var(--pink)}
+.pcard.out{border-top-color:var(--lav)}
+.pcard.offday{border-top-color:#e6dcd2;opacity:.85}
+.phead{display:flex;gap:10px;align-items:center;margin-bottom:8px}
+.ava{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-size:24px;background:var(--lemon2);flex:none}
+.pname{font-weight:600;line-height:1.25}
+.pname small{display:block;color:var(--soft);font-weight:400;font-size:12px}
+.status{margin:4px 0 8px}
+.items{display:flex;flex-direction:column;gap:6px}
+.item{display:flex;gap:8px;align-items:flex-start;padding:7px 9px;border-radius:12px;font-size:13.5px;cursor:pointer;line-height:1.35}
+.item:hover{filter:brightness(.97)}
+.item .t{font-weight:600}
+.item .sub{color:var(--soft);font-size:12px}
+.pcard .add{position:absolute;right:10px;top:10px;width:28px;height:28px;border-radius:50%;border:0;background:var(--bg);font-size:16px;color:var(--soft)}
+
+/* side lists */
+.side h3{margin:0 0 10px;font-size:18px}
+.task{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px dashed var(--line)}
+.task:last-child{border-bottom:0}
+.check{width:22px;height:22px;border-radius:7px;border:2px solid var(--pink);background:#fff;flex:none;display:grid;place-items:center;font-size:13px;margin-top:1px}
+.check.done{background:var(--pink);color:#fff}
+.task.done .tt{text-decoration:line-through;color:var(--soft)}
+.due{font-size:12px;font-weight:600}
+.due.late{color:#d6336c}
+
+/* month */
+.mhead{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:6px;text-align:center;font-weight:600;color:var(--soft)}
+.month{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.day{background:var(--paper);border-radius:14px;min-height:112px;padding:6px;box-shadow:0 2px 0 rgba(74,59,82,.05);cursor:pointer;display:flex;flex-direction:column;gap:3px;border:2px solid transparent;min-width:0}
+.day:hover{border-color:var(--pink2)}
+.day.dim{opacity:.4}
+.day.off{background:var(--off)}
+.day.hol{background:var(--hol)}
+.day.today{border-color:var(--pink)}
+.dnum{font-weight:700;font-size:14px;display:flex;justify-content:space-between;gap:4px}
+.dnum span.h{font-family:inherit;font-weight:500;font-size:10.5px;color:#c26a1b;text-align:right;line-height:1.2;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.chip{font-size:11.5px;border-radius:8px;padding:1px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.5}
+.more{font-size:11px;color:var(--soft);padding-left:4px}
+@media (max-width:700px){.day{min-height:70px}.chip{font-size:10px;padding:0 3px}.chip .nm{display:none}}
+
+/* team grid */
+.tgwrap{overflow:auto;background:var(--paper);border-radius:var(--r);box-shadow:var(--shadow);max-height:72vh}
+table.tg{border-collapse:separate;border-spacing:0;font-size:13px}
+.tg th,.tg td{border-bottom:1px solid var(--line);border-right:1px solid var(--line);text-align:center;padding:0;height:34px;min-width:34px}
+.tg thead th{position:sticky;top:0;background:#fff;z-index:2;font-weight:600;padding:4px 2px;line-height:1.1}
+.tg thead th small{display:block;font-size:10px;color:var(--soft);font-weight:500}
+.tg .nm{position:sticky;left:0;background:#fff;z-index:1;text-align:left;padding:4px 10px;min-width:180px;white-space:nowrap}
+.tg thead .nm{z-index:3}
+.tg td.off,.tg th.off{background:var(--off)}
+.tg td.hol,.tg th.hol{background:var(--hol)}
+.tg th.today{background:var(--pink2)}
+.tg td{cursor:pointer}
+.tg td:hover{outline:2px solid var(--pink);outline-offset:-2px}
+.tg .code{display:inline-block;min-width:26px;border-radius:7px;padding:2px 3px;font-weight:600;font-size:12px}
+.tg .grp td{background:var(--lav2);text-align:left;padding:4px 10px;font-weight:600;position:sticky;left:0}
+.legend{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+
+/* summary */
+table.sum{width:100%;border-collapse:collapse;font-size:14px}
+.sum th{font-weight:600;text-align:center;padding:8px 6px;border-bottom:2px solid var(--line);color:var(--soft)}
+.sum td{padding:9px 6px;border-bottom:1px dashed var(--line);text-align:center}
+.sum td.l{text-align:left}
+.bar{height:10px;border-radius:99px;background:var(--sky2);overflow:hidden;min-width:90px}
+.bar i{display:block;height:100%;background:var(--sky);border-radius:99px}
+
+/* settings */
+.set-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:18px}
+.list{display:flex;flex-direction:column;gap:6px;max-height:420px;overflow:auto}
+.li{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:12px;background:var(--bg)}
+.li .grow{flex:1;min-width:0}
+.li .grow small{display:block;color:var(--soft);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ic{border:0;background:transparent;font-size:16px;padding:4px 6px;border-radius:8px}
+.ic:hover{background:#fff}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--soft);font-weight:500}
+.inp{border:2px solid var(--line);border-radius:12px;padding:8px 10px;background:#fff;color:var(--ink);font-size:14.5px;width:100%}
+.inp:focus{outline:none;border-color:var(--pink)}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:520px){.fr{grid-template-columns:1fr}}
+
+/* modal */
+.scrim{position:fixed;inset:0;background:rgba(74,59,82,.35);display:none;align-items:flex-start;justify-content:center;z-index:50;padding:30px 12px;overflow:auto}
+.scrim.show{display:flex}
+.modal{background:#fff;border-radius:24px;max-width:560px;width:100%;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.2);animation:pop .18s ease-out}
+@keyframes pop{from{transform:scale(.96);opacity:0}to{transform:none;opacity:1}}
+.modal h2{margin:0 0 12px;font-size:22px}
+.types{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:6px;margin-bottom:12px}
+.tbtn{border:2px solid transparent;border-radius:14px;padding:8px 6px;background:var(--bg);text-align:center;font-size:13px;font-weight:600;line-height:1.2}
+.tbtn b{display:block;margin-bottom:4px}
+.tbtn.on{border-color:var(--ink)}
+.ppl{display:flex;flex-wrap:wrap;gap:6px}
+.pp{border:2px solid var(--line);border-radius:999px;padding:4px 10px 4px 6px;background:#fff;font-size:13px;display:inline-flex;gap:4px;align-items:center}
+.pp.on{background:var(--mint2);border-color:var(--mint)}
+.mfoot{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap}
+.mfoot .left{margin-right:auto}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:999px;z-index:60;font-size:14px;display:none}
+.toast.show{display:block;animation:pop .2s}
+.empty{text-align:center;padding:30px 10px;color:var(--soft)}
+.empty .big{font-size:42px}
+.hidden{display:none!important}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:middle;margin-right:2px;flex:none}
+.ini{width:30px;height:30px;border-radius:50%;background:var(--pink2);color:#c2416b;display:inline-grid;place-items:center;font-weight:600;font-size:14px;flex:none}
+.tbtn b .dot{width:12px;height:12px}
+.todaygrid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:860px){.todaygrid{grid-template-columns:1fr}}
+.agcard h3{margin:0;font-size:18px}
+.cnt{display:inline-block;min-width:24px;padding:0 8px;border-radius:99px;background:var(--bg);font-size:13px;text-align:center;color:var(--soft);font-weight:600;margin-left:4px}
+.agenda{display:flex;gap:14px;padding:12px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.agenda:last-child{border-bottom:0}
+.agenda:hover .ag-title{color:#c2416b}
+.tm{width:64px;flex:none;font-weight:600;font-size:16px;line-height:1.25;color:var(--ink)}
+.tm small{display:block;font-weight:400;font-size:12.5px;color:var(--soft)}
+.tm.muted{font-size:13px;font-weight:500;color:var(--soft)}
+.ag-title{font-weight:600;font-size:15.5px;margin-bottom:2px}
+.ag-meta{font-size:13px;color:var(--ink);line-height:1.5}
+.lbl{display:inline-block;color:var(--soft);min-width:70px;margin-right:6px}
+.pic{width:32px;height:32px;border-radius:50%;display:inline-grid;place-items:center;flex:none;overflow:hidden}
+.pic svg{width:100%;height:100%;display:block}
+.pic.sm{width:24px;height:24px}
+.whos{display:inline-flex;flex-wrap:wrap;gap:4px 10px;vertical-align:top}
+.who{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.nmw{display:flex;align-items:center;gap:8px}
+.pp{gap:6px!important}
+.pic.xs{width:17px;height:17px}
+.pchip{display:flex;align-items:center;gap:4px}
+.pchip .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.pchip .kc{font-weight:700;font-size:10.5px;opacity:.8}
+.drow{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14.5px;align-items:flex-start}
+.drow .lbl{flex:none;width:96px;margin:0}
+.dsec{font-size:15px;margin:14px 0 6px;color:var(--soft)}
+.dline{display:flex;gap:10px;align-items:flex-start;padding:9px 10px;border-radius:12px;background:var(--bg);margin-bottom:6px;cursor:pointer}
+.dline:hover{background:var(--pink2)}
+.kbd{font-weight:700}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="logo">
+      <svg class="sun" viewBox="0 0 48 48" aria-hidden="true"><rect x="4" y="8" width="40" height="36" rx="7" fill="#ff8fab"/><rect x="4" y="8" width="40" height="11" rx="7" fill="#e86f8f"/><rect x="13" y="3" width="4" height="10" rx="2" fill="#4a3b52"/><rect x="31" y="3" width="4" height="10" rx="2" fill="#4a3b52"/><g fill="#fff"><rect x="11" y="24" width="7" height="6" rx="1.5"/><rect x="21" y="24" width="7" height="6" rx="1.5"/><rect x="31" y="24" width="7" height="6" rx="1.5"/><rect x="11" y="33" width="7" height="6" rx="1.5"/><rect x="21" y="33" width="7" height="6" rx="1.5"/></g></svg>
+      <div><h1>ปฏิทินงานทีม</h1><small>ตารางประชุม งานที่ต้องส่ง นัดหมาย และการลาของบุคลากร</small></div>
+    </div>
+    <div class="spacer"></div>
+    <select id="meSel" class="inp" style="width:auto;border-radius:999px" title="ฉันคือใคร (จำไว้ในเครื่องนี้)"></select>
+    <button class="btn pri" id="addBtn">＋ ลงรายการ</button>
+  </header>
+  <nav class="tabs" id="tabs">
+    <a href="#today" data-v="today">วันนี้</a>
+    <a href="#leave" data-v="leave">ปฏิทินวันลา</a>
+    <a href="#agenda" data-v="agenda">ปฏิทินประชุม/นัดหมาย</a>
+    <a href="#team" data-v="team">ตารางทีม</a>
+    <a href="#summary" data-v="summary">สรุปวันลา</a>
+    <a href="#settings" data-v="settings">ตั้งค่า & Export</a>
+  </nav>
+  <div id="banner"></div>
+  <main id="view"></main>
+</div>
+
+<div class="scrim" id="scrim"><div class="modal" id="modal"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* Fill the FY2570 attendance template (บัญชีสรุปผลการมาปฏิบัติราชการ) */
+(function (root) {
+  const MONTHS = [ // [startCol, year, month(1-12)]
+    ['G', 2026, 10], ['AS', 2026, 11], ['CD', 2026, 12], ['DP', 2027, 1], ['FB', 2027, 2], ['GK', 2027, 3],
+    ['HW', 2027, 4], ['JH', 2027, 5], ['KT', 2027, 6], ['ME', 2027, 7], ['NQ', 2027, 8], ['PC', 2027, 9]
+  ];
+  const GROUPS = ['ข้าราชการ', 'จ้างเหมาบริการ', 'พนักงานราชการ'];
+  function colNum(s) { let n = 0; for (const ch of s) n = n * 26 + (ch.charCodeAt(0) - 64); return n; }
+  function colStr(n) { let s = ''; while (n > 0) { const m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); } return s; }
+  function dim(y, m) { return new Date(y, m, 0).getDate(); }
+  function iso(y, m, d) { return y + '-' + String(m).padStart(2, '0') + '-' + String(d).padStart(2, '0'); }
+  function clone(o) { return o ? JSON.parse(JSON.stringify(o)) : {}; }
+
+  // codes: map of personId -> { 'YYYY-MM-DD': code }
+  async function fillTemplate(ExcelJS, tplBuf, data) {
+    const { staff, codes, holidays, notes } = data; // staff sorted, each {id,name,position,group,carry,quota}
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(tplBuf);
+    const ws = wb.worksheets[0];
+    const LASTCOL = colNum('RJ');
+
+    // ---- snapshot styles/formulas from template
+    const rowStyle = (r) => { const a = []; for (let c = 1; c <= LASTCOL; c++) a[c] = clone(ws.getCell(r, c).style); return a; };
+    const hdrStyle = rowStyle(6), staffStyle = rowStyle(8), blankStyle = rowStyle(19);
+    const hdrH = ws.getRow(6).height, staffH = ws.getRow(8).height;
+    const f8 = [];
+    for (let c = 1; c <= LASTCOL; c++) { const cell = ws.getCell(8, c); let f = null; try { f = cell.formula; } catch (e) { } if (!f && cell.value && cell.value.formula) f = cell.value.formula; if (f) f8[c] = f; }
+    const pFont = clone(ws.getCell('G7').font);          // Wingdings 2 "P" = ✓
+    const tFont = clone(ws.getCell('M7').font);          // TH SarabunIT๙ 16
+    // legend block rows 22..33
+    const LEG0 = 22, LEG1 = 33, legend = [];
+    for (let r = LEG0; r <= LEG1; r++) {
+      const cells = [];
+      ws.getRow(r).eachCell({ includeEmpty: false }, (cell, c) => cells.push({ c, v: cell.value, s: clone(cell.style) }));
+      legend.push({ h: ws.getRow(r).height, cells });
+    }
+    const legendMerges = [['A', 22, 'B', 22], ['QQ', 24, 'RI', 24], ['QQ', 25, 'RI', 25]];
+
+    // ---- wipe rows 6+
+    for (const m of ['A22:B22', 'QQ24:RI24', 'QQ25:RI25']) { try { ws.unMergeCells(m); } catch (e) { } }
+    const last = Math.max(ws.rowCount, 40);
+    for (let rr = 6; rr <= last; rr++) {
+      const row = ws.getRow(rr);
+      row.eachCell({ includeEmpty: true }, (cell) => { cell.value = null; cell.style = {}; });
+      row.height = undefined;
+    }
+
+    const holSet = new Set(holidays);
+    const isOff = (y, m, d) => { const wd = new Date(y, m - 1, d).getDay(); return wd === 0 || wd === 6 || holSet.has(iso(y, m, d)); };
+    const offFill = (y, m, d) => {
+      const wd = new Date(y, m - 1, d).getDay();
+      if (wd === 0 || wd === 6) return { type: 'pattern', pattern: 'solid', fgColor: { theme: 9, tint: 0.7999816888943144 }, bgColor: { indexed: 64 } };
+      if (holSet.has(iso(y, m, d))) return { type: 'pattern', pattern: 'solid', fgColor: { theme: 7, tint: 0.7999816888943144 }, bgColor: { indexed: 64 } };
+      return null;
+    };
+    // re-shade header day numbers (row 5) to match holiday list
+    for (const [sc, y, m] of MONTHS) {
+      const c0 = colNum(sc);
+      for (let d = 1; d <= dim(y, m); d++) {
+        const cell = ws.getCell(5, c0 + d - 1); const st = clone(cell.style);
+        const f = offFill(y, m, d); if (f) st.fill = f; else delete st.fill;
+        cell.style = st;
+      }
+    }
+
+    function applyRowStyle(r, styles, fillDays) {
+      for (let c = 1; c <= LASTCOL; c++) {
+        const st = clone(styles[c]);
+        ws.getCell(r, c).style = st;
+      }
+      if (fillDays) for (const [sc, y, m] of MONTHS) {
+        const c0 = colNum(sc);
+        for (let d = 1; d <= dim(y, m); d++) {
+          const cell = ws.getCell(r, c0 + d - 1); const st = clone(cell.style);
+          const f = offFill(y, m, d); if (f) st.fill = f; else delete st.fill;
+          cell.style = st;
+        }
+      }
+    }
+
+    let r = 6;
+    for (const g of GROUPS) {
+      const people = staff.filter(s => (s.group || GROUPS[0]) === g);
+      applyRowStyle(r, hdrStyle, true); ws.getRow(r).height = hdrH;
+      ws.getCell(r, 1).value = g; r++;
+      if (!people.length) { applyRowStyle(r, blankStyle, true); r++; continue; }
+      people.forEach((p, i) => {
+        applyRowStyle(r, staffStyle, true); ws.getRow(r).height = staffH;
+        ws.getCell(r, 1).value = i + 1;
+        ws.getCell(r, 2).value = p.name || '';
+        ws.getCell(r, 3).value = p.position || '';
+        ws.getCell(r, 4).value = Number(p.carry) || 0;
+        ws.getCell(r, 5).value = Number(p.quota) || 0;
+        ws.getCell(r, 6).value = { formula: 'D' + r + '+E' + r };
+        const pc = codes[p.id] || {};
+        for (const [sc, y, m] of MONTHS) {
+          const c0 = colNum(sc), n = dim(y, m);
+          let late = 0, sickRuns = 0, bizRuns = 0, prev = null;
+          for (let d = 1; d <= n; d++) {
+            const code = pc[iso(y, m, d)];
+            const cell = ws.getCell(r, c0 + d - 1);
+            if (code) {
+              cell.value = code;
+              cell.font = code === 'P' ? pFont : tFont;
+            }
+            if (code === 'ส') late++;
+            if (isOff(y, m, d) && code !== 'ป' && code !== 'ก') continue; // runs bridge weekends
+            if (code === 'ป' && prev !== 'ป') sickRuns++;
+            if (code === 'ก' && prev !== 'ก') bizRuns++;
+            prev = code || null;
+          }
+          // ครั้ง columns sit right after the last day: สาย(ครั้ง,วัน) ป่วย(ครั้ง,วัน) กิจ(ครั้ง,วัน) พักผ่อน(วัน)
+          const s0 = c0 + n;
+          if (late) ws.getCell(r, s0).value = late;
+          if (sickRuns) ws.getCell(r, s0 + 2).value = sickRuns;
+          if (bizRuns) ws.getCell(r, s0 + 4).value = bizRuns;
+        }
+        // formulas from row 8 template, re-pointed to this row
+        for (let c = 1; c <= LASTCOL; c++) {
+          if (!f8[c] || c === 6) continue;
+          ws.getCell(r, c).value = { formula: f8[c].replace(/(\$?[A-Z]{1,3}\$?)8(?![0-9])/g, '$1' + r) };
+        }
+        ws.getCell(r, colNum('RI')).value = { formula: 'F' + r + '-RH' + r };
+        if (notes && notes[p.id]) ws.getCell(r, colNum('RJ')).value = notes[p.id];
+        r++;
+      });
+    }
+    applyRowStyle(r, blankStyle, true); r++;
+    // legend
+    const off = r - LEG0;
+    legend.forEach((row, i) => {
+      const rr = LEG0 + off + i;
+      if (row.h) ws.getRow(rr).height = row.h;
+      row.cells.forEach(({ c, v, s }) => { const cell = ws.getCell(rr, c); cell.style = s; cell.value = v; });
+    });
+    for (const [a, r1, b, r2] of legendMerges) ws.mergeCells(a + (r1 + off) + ':' + b + (r2 + off));
+    // print area
+    try { ws.pageSetup.printArea = 'A1:RJ' + (25 + off); } catch (e) { }
+    return wb.xlsx.writeBuffer();
+  }
+  root.TeamExport = { fillTemplate, MONTHS, GROUPS };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+/* ================= constants ================= */
+const TYPES = {
+  sick:  {code:'ป',  label:'ลาป่วย',      emoji:'', bg:'#ffd6dc', fg:'#a61e4d', away:true},
+  biz:   {code:'ก',  label:'ลากิจ',       emoji:'', bg:'#ffe3c2', fg:'#a14a00', away:true},
+  vac:   {code:'พ',  label:'ลาพักผ่อน',   emoji:'', bg:'#d3e9ff', fg:'#1c5d99', away:true},
+  study: {code:'ศ',  label:'ลาไปศึกษา',   emoji:'', bg:'#f3d9fa', fg:'#862e9c', away:true},
+  trip:  {code:'รช', label:'ไปราชการ',    emoji:'', bg:'#e5dbff', fg:'#5f3dc4', out:true, weekend:true},
+  train: {code:'อ',  label:'อบรม',        emoji:'', bg:'#d8f5e0', fg:'#2b8a3e', out:true, weekend:true},
+  wfh:   {code:'w',  label:'WFH',         emoji:'', bg:'#d0f4f7', fg:'#0b7285', out:true},
+  late:  {code:'ส',  label:'มาสาย',       emoji:'', bg:'#fff0b8', fg:'#8a6100', single:true},
+  meet:  {code:'ปช', label:'ประชุม',      emoji:'', bg:'#ffdeeb', fg:'#c2255c', timed:true, weekend:true},
+  task:  {code:'',   label:'งานที่ต้องส่ง', emoji:'', bg:'#fff4cf', fg:'#7a5a00', single:true, task:true, weekend:true},
+  other: {code:'',   label:'นัดหมาย/อื่นๆ', emoji:'', bg:'#ece7f2', fg:'#5c4b66', timed:true, weekend:true},
+};
+for (const T of Object.values(TYPES)) T.emoji = `<i class="dot" style="background:${T.fg}"></i>`;
+const PCOL = [['#ffe0e9','#c2416b'],['#e5f1ff','#1c5d99'],['#e3f7ec','#2b8a3e'],['#efeaff','#5f3dc4'],['#fff4cf','#8a6100'],['#d0f4f7','#0b7285'],['#ffe3c2','#a14a00'],['#f3d9fa','#862e9c']];
+const USER_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.2" r="4.2" fill="currentColor"/><path d="M3.8 21c.6-4.3 4-6.8 8.2-6.8s7.6 2.5 8.2 6.8" fill="currentColor"/></svg>';
+const SKINS = ['#ffd9c0','#f7c9a5','#eab68e','#d9a07a','#ffe2cc'];
+const HAIRS = ['#3b2a2a','#4a3326','#2b2b33','#5a3d2b','#6b4a35'];
+function faceSvg(id, female){
+  let h = 0; for (const c of String(id)) h = (h*31 + c.charCodeAt(0)) >>> 0;
+  const skin = SKINS[h % SKINS.length], hair = HAIRS[(h>>3) % HAIRS.length], st = (h>>6) % 4, glasses = ((h>>9) % 5) === 0;
+  let back = '', front = '';
+  if (female) {
+    back = `<path d="M8 22c0-10 5-16 12-16s12 6 12 16v12H8z" fill="${hair}"/>`;
+    front = st%2 ? `<path d="M10 18c1-7 6-10 10-10s9 3 10 10c-4-1-8-4-10-7-2 3-6 6-10 7z" fill="${hair}"/>`
+                 : `<path d="M10 18c0-6 5-10 10-10s10 4 10 10c-6 0-9-2-10-5-1 3-4 5-10 5z" fill="${hair}"/>`;
+  } else if (st===0) front = `<path d="M10 17c0-6 4-10 10-10s10 4 10 10c-3-2-7-3-10-3s-7 1-10 3z" fill="${hair}"/>`;
+  else if (st===1) front = `<path d="M10 18c-1-7 4-11 10-11 5 0 10 3 10 9-5 0-10-1-13-4-1 3-3 5-7 6z" fill="${hair}"/>`;
+  else if (st===2) front = `<path d="M10 17l2-6 3 3 2-6 3 4 3-5 2 6 3-3 2 7c-3-2-7-3-10-3s-7 1-10 3z" fill="${hair}"/>`;
+  else front = `<path d="M11 15c1-5 5-7 9-7s8 2 9 7c-3-1-6-1-9-1s-6 0-9 1z" fill="${hair}"/>`;
+  const eyes = glasses
+    ? `<g fill="none" stroke="#4a3b52" stroke-width="1.2"><circle cx="16" cy="21" r="2.8"/><circle cx="24" cy="21" r="2.8"/><path d="M18.8 21h2.4"/></g><circle cx="16" cy="21" r="1" fill="#4a3b52"/><circle cx="24" cy="21" r="1" fill="#4a3b52"/>`
+    : `<circle cx="16" cy="21" r="1.4" fill="#4a3b52"/><circle cx="24" cy="21" r="1.4" fill="#4a3b52"/>`;
+  return `<svg viewBox="3 3 34 37" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${back}<rect x="17" y="27" width="6" height="5" fill="${skin}"/><path d="M6 40c1-6 7-9 14-9s13 3 14 9z" fill="currentColor" opacity=".55"/>
+    <ellipse cx="20" cy="20" rx="10" ry="11" fill="${skin}"/>${front}${eyes}
+    <circle cx="13.5" cy="25" r="1.6" fill="#ff8fab" opacity=".45"/><circle cx="26.5" cy="25" r="1.6" fill="#ff8fab" opacity=".45"/>
+    <path d="M17.5 26q2.5 2 5 0" stroke="#4a3b52" stroke-width="1.2" fill="none" stroke-linecap="round"/></svg>`;
+}
+function avaHtml(p, sm){ const id = String(p && p.id || ''); let h = 0; for (const c of id) h = (h*31 + c.charCodeAt(0)) >>> 0;
+  const st = S.staff[id] || p || {}; const female = /^(นางสาว|นาง|น\.ส\.)/.test(String(st.name||'').trim());
+  const [bg, fg] = PCOL[h % PCOL.length]; return `<span class="pic${sm? ' '+(sm===true?'sm':sm):''}" style="background:${bg};color:${fg}">${faceSvg(id, female)}</span>`; }
+function whoHtml(e){ return `<span class="whos">${(e.people||[]).map(id=>`<span class="who">${avaHtml({id},true)}${esc(pname(id))}</span>`).join('')}</span>`; }
+const LEAVE_ORDER = ['sick','biz','vac','study','trip','train','wfh','meet','late']; // export priority
+const GROUPS = ['ข้าราชการ','จ้างเหมาบริการ','พนักงานราชการ'];
+const AVAS = ['','','','','','','','','','','','','','','','','','','',''];
+const TH_M = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+const TH_MS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+const TH_D = ['อา','จ','อ','พ','พฤ','ศ','ส'];
+const TH_DL = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
+
+/* ================= helpers ================= */
+const $ = (s, el=document) => el.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad = n => String(n).padStart(2,'0');
+const isoOf = d => d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const parse = s => { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); };
+const addDays = (s, n) => { const d = parse(s); d.setDate(d.getDate()+n); return isoOf(d); };
+const todayIso = () => isoOf(new Date());
+const thDate = (s, long) => { const d = parse(s); return (long ? 'วัน'+TH_DL[d.getDay()]+'ที่ ' : '') + d.getDate()+' '+(long?TH_M:TH_MS)[d.getMonth()]+' '+(d.getFullYear()+543); };
+const thShort = s => { const d = parse(s); return d.getDate()+' '+TH_MS[d.getMonth()]; };
+const fyOf = s => { const d = parse(s); return d.getFullYear() + 543 + (d.getMonth() >= 9 ? 1 : 0); };
+const fyRange = fy => [ (fy-544)+'-10-01', (fy-543)+'-09-30' ];
+const uid = () => (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)+Date.now().toString(36)).replace(/-/g,'').slice(0,16);
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove('show'),2600); }
+const lsGet = k => { try { return localStorage.getItem(k); } catch(e){ return null; } };
+const lsSet = (k,v) => { try { localStorage.setItem(k,v); } catch(e){} };
+
+/* ================= state & store ================= */
+const S = { staff:{}, events:{}, holidays:{}, ready:{staff:false,events:false,holidays:false}, canWrite:true, mode:'loading', names:{} };
+let SHEET_URL = '';
+let view = 'today', cursorDay = todayIso(), cursorMonth = todayIso().slice(0,7), filterPerson = '';
+// URL ของ Apps Script Web App (Deploy > Web app > /exec)
+const API_URL = 'https://script.google.com/macros/s/AKfycbzbFtWjFDMBsBhi421l1CaUXD2Fukld91OC2a3k4chxy7EZ1g2fbhkv9-BX_z1kZgottA/exec';
+async function api(payload){
+  const r = payload
+    ? await fetch(API_URL, {method:'POST', body: JSON.stringify(payload)})   // text/plain: ไม่ต้อง preflight
+    : await fetch(API_URL + '?action=getAll&t=' + Date.now());
+  if (!r.ok) throw new Error('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ (' + r.status + ')');
+  const j = await r.json();
+  if (!j.ok) throw new Error(j.error || 'เกิดข้อผิดพลาด');
+  return j.data;
+}
+function applyAll(d){
+  if (!d) return;
+  S.staff = d.staff || {}; S.events = d.events || {}; S.holidays = d.holidays || {};
+  SHEET_URL = d.url || SHEET_URL; S.mode = 'live'; S.lastAt = d.at || '';
+  if (!$('#scrim').classList.contains('show')) render(); else renderMe();
+}
+let loading = false;
+async function loadAll(){
+  if (loading) return; loading = true;
+  try { applyAll(await api()); }
+  catch(e){ console.error(e); if (S.mode==='loading') { S.mode='error'; S.err = e.message || String(e); render(); } }
+  finally { loading = false; }
+}
+const store = {
+  async set(col, id, data){ S[col][id] = data; render(); applyAll(await api({action:'save', col, id, data})); },
+  async del(col, id){ delete S[col][id]; render(); applyAll(await api({action:'delete', col, id})); }
+};
+async function guard(p){ try { await p; return true; } catch(e){ console.error(e);
+  toast('บันทึกไม่สำเร็จ: ' + ((e && e.message) || 'ลองอีกครั้ง')); loadAll(); return false; } }
+
+/* ================= derived ================= */
+const staffList = () => Object.entries(S.staff).map(([id,s])=>({id,...s}))
+  .sort((a,b)=> (GROUPS.indexOf(a.group||GROUPS[0]) - GROUPS.indexOf(b.group||GROUPS[0])) || ((a.order??999)-(b.order??999)) || String(a.name).localeCompare(String(b.name),'th'));
+const evList = () => Object.entries(S.events).map(([id,e])=>({id,...e}));
+const isWeekend = s => { const g = parse(s).getDay(); return g===0||g===6; };
+const isHol = s => !!S.holidays[s];
+const isOff = s => isWeekend(s) || isHol(s);
+const pname = id => { const p = S.staff[id]; return p ? (p.nick || shortName(p.name)) : '(ลบแล้ว)'; };
+const shortName = n => String(n||'').replace(/^(นาย|นางสาว|นาง|น\.ส\.|ว่าที่\s*ร\.ต\.)\s*/,'').split(/\s+/)[0];
+function evOnDay(e, s){
+  if (s < e.start || s > (e.end||e.start)) return false;
+  const T = TYPES[e.type] || TYPES.other;
+  if (!T.weekend && isOff(s)) return false;
+  return true;
+}
+function eventsOn(s, personId){
+  return evList().filter(e => evOnDay(e, s) && (!personId || (e.people||[]).includes(personId)))
+    .sort((a,b)=> (a.time||'99').localeCompare(b.time||'99'));
+}
+function workDays(start, end){ let n=0, s=start; while (s<=end){ if(!isOff(s)) n++; s=addDays(s,1); if(n>400) break; } return n; }
+function codeFor(personId, s, opts){
+  const evs = eventsOn(s, personId);
+  for (const k of LEAVE_ORDER){
+    if (k==='meet' && !opts.meet) continue;
+    const e = evs.find(x=>x.type===k);
+    if (e) return TYPES[k].code;
+  }
+  if (opts.autoP && !isOff(s) && s <= opts.cutoff) return 'P';
+  return '';
+}
+function statusOf(personId, s){
+  const evs = eventsOn(s, personId);
+  for (const k of ['sick','biz','vac','study','trip','train','wfh']) { const e = evs.find(x=>x.type===k); if (e) return {k, e}; }
+  return null;
+}
+
+/* ================= render ================= */
+function render(){
+  document.querySelectorAll('#tabs a').forEach(a=>a.classList.toggle('on', a.dataset.v===view));
+  renderMe();
+  $('#addBtn').classList.toggle('hidden', !S.canWrite);
+  const b = $('#banner');
+  if (S.mode==='loading') b.innerHTML = '<div class="banner">กำลังโหลดข้อมูล…</div>';
+  else if (S.mode==='error') b.innerHTML = `<div class="banner err">โหลดข้อมูลไม่ได้: ${esc(S.err||'')} ลองรีเฟรชหน้านี้อีกครั้ง</div>`;
+  else b.innerHTML = '';
+  const v = $('#view');
+  if (view==='today') v.innerHTML = vToday();
+  else if (view==='leave' || view==='agenda') v.innerHTML = vMonth(view);
+  else if (view==='team') v.innerHTML = vTeam();
+  else if (view==='summary') v.innerHTML = vSummary();
+  else v.innerHTML = vSettings();
+  hydrateNames();
+}
+function renderMe(){
+  const sel = $('#meSel'); const me = lsGet('teamcal-me') || '';
+  const html = '<option value="">ผู้ใช้งาน: เลือกชื่อ</option>' + staffList().map(p=>`<option value="${esc(p.id)}" ${p.id===me?'selected':''}>${esc(p.nick||shortName(p.name))}</option>`).join('');
+  if (sel.innerHTML !== html) sel.innerHTML = html;
+}
+function personTag(id){ const p=S.staff[id]; return `<span>${esc(pname(id))}</span>`; }
+function itemHtml(e, opts={}){
+  const T = TYPES[e.type]||TYPES.other;
+  const range = (e.end && e.end!==e.start) ? `${thShort(e.start)} – ${thShort(e.end)}` : (opts.showDate ? thShort(e.start) : '');
+  const who = opts.showWho ? (e.people||[]).map(pname).join(', ') : '';
+  const sub = [e.time ? ''+e.time+(e.endTime?'–'+e.endTime:'') : '', e.place ? ''+e.place : '', range, who].filter(Boolean).join(' · ');
+  return `<div class="item" style="background:${T.bg}" data-ev="${esc(e.id)}"><span>${T.emoji}</span><div><div class="t" style="color:${T.fg}">${esc(e.title || T.label)}${e.title?` <span class="sub">(${T.label})</span>`:''}</div>${sub?`<div class="sub">${esc(sub)}</div>`:''}</div></div>`;
+}
+
+function vToday(){
+  const s = cursorDay, t = todayIso();
+  const evs = evList().filter(e=>evOnDay(e, s));
+  const byTime = (a,b)=> (a.time||'99').localeCompare(b.time||'99') || String(a.title).localeCompare(String(b.title),'th');
+  const meets = evs.filter(e=>e.type==='meet').sort(byTime);
+  const appts = evs.filter(e=>e.type==='other').sort(byTime);
+  const tasks = evList().filter(e=>e.type==='task' && (e.start===s || (s===t && !e.done && e.start < s)))
+    .sort((a,b)=> (a.done?1:0)-(b.done?1:0) || a.start.localeCompare(b.start));
+  const who = e => (e.people||[]).map(pname).join(', ');
+  const timeCell = e => e.time ? `<div class="tm">${esc(e.time)}${e.endTime?`<small>– ${esc(e.endTime)}</small>`:''}</div>` : '<div class="tm muted">ทั้งวัน</div>';
+  const row = e => `<div class="agenda" data-ev="${esc(e.id)}">${timeCell(e)}<div class="ag-body">
+      <div class="ag-title">${esc(e.title || (TYPES[e.type]||TYPES.other).label)}</div>
+      ${e.place?`<div class="ag-meta"><span class="lbl">สถานที่</span>${esc(e.place)}</div>`:''}
+      <div class="ag-meta"><span class="lbl">ผู้เข้าร่วม</span>${whoHtml(e)}</div>
+      ${e.note?`<div class="ag-meta muted">${esc(e.note)}</div>`:''}</div></div>`;
+  const taskRow = e => `<div class="task ${e.done?'done':''}"><button class="check ${e.done?'done':''}" data-done="${esc(e.id)}" ${S.canWrite?'':'disabled'} title="ทำเครื่องหมายว่าส่งแล้ว">${e.done?'✓':''}</button>
+      <div style="flex:1;min-width:0;cursor:pointer" data-ev="${esc(e.id)}"><div class="tt">${esc(e.title||'งานที่ต้องส่ง')}</div>
+      <div class="ag-meta"><span class="lbl">ผู้รับผิดชอบ</span>${whoHtml(e)}${e.time?` · ภายใน ${esc(e.time)} น.`:''}${e.start<s?` <span class="due late">· เลยกำหนด (${thShort(e.start)})</span>`:''}${e.done?' <span class="due">· ส่งแล้ว</span>':''}</div></div></div>`;
+  const sec = (title, color, n, body, empty, type) => `<section class="card agcard" style="border-top:4px solid ${color}">
+      <div class="row" style="justify-content:space-between;margin-bottom:6px"><h3>${title} <span class="cnt">${n}</span></h3>
+      ${S.canWrite?`<button class="btn sm ghost" data-quick="${type}">+ เพิ่ม</button>`:''}</div>
+      ${body || `<div class="muted" style="font-size:14px;padding:10px 0">${empty}</div>`}</section>`;
+  const offTxt = isHol(s) ? esc(S.holidays[s].name||'วันหยุดราชการ') : isWeekend(s) ? 'วันหยุดเสาร์-อาทิตย์' : '';
+  return `<div class="daynav"><button class="round" data-day="-1">‹</button><h2>${thDate(s,true)}</h2><button class="round" data-day="1">›</button>
+    ${s!==t?'<button class="btn sm" data-day="0">วันนี้</button>':''}
+    <input type="date" class="inp" style="width:auto" id="pickDay" value="${s}">
+    ${offTxt?`<span class="pill" style="background:var(--hol)">${offTxt}</span>`:''}</div>
+    <div class="todaygrid">
+      ${sec('ประชุม', TYPES.meet.fg, meets.length, meets.map(row).join(''), 'ไม่มีประชุมในวันนี้', 'meet')}
+      <div style="display:flex;flex-direction:column;gap:16px">
+      ${sec('งานที่ต้องส่ง', TYPES.task.fg, tasks.filter(e=>!e.done).length, tasks.map(taskRow).join(''), 'ไม่มีงานที่ต้องส่งในวันนี้', 'task')}
+      ${sec('นัดหมาย', TYPES.other.fg, appts.length, appts.map(row).join(''), 'ไม่มีนัดหมายในวันนี้', 'other')}
+      </div>
+    </div>`;
+}
+
+const LEAVE_KINDS = ['sick','biz','vac','study','trip','train','wfh','late'];
+const AGENDA_KINDS = ['meet','task','other'];
+function vMonth(kind){
+  const kinds = kind==='agenda' ? AGENDA_KINDS : LEAVE_KINDS;
+  const [y,m] = cursorMonth.split('-').map(Number);
+  const first = new Date(y, m-1, 1), start = new Date(first); start.setDate(1 - first.getDay());
+  const t = todayIso(); let cells='';
+  for (let i=0;i<42;i++){
+    const d = new Date(start); d.setDate(start.getDate()+i); const s = isoOf(d);
+    if (i>=35 && d.getMonth()!==m-1) break;
+    const evs = eventsOn(s, filterPerson).filter(e=>kinds.includes(e.type));
+    const chips = [];
+    evs.forEach(e=>{ const T=TYPES[e.type]||TYPES.other;
+      if (kind==='agenda') chips.push(`<div class="chip" style="background:${T.bg};color:${T.fg}" data-ev="${esc(e.id)}" title="${esc((e.time?e.time+' ':'')+(e.title||T.label)+(e.place?' @ '+e.place:''))}">${e.time?`<b>${esc(e.time)}</b> `:T.emoji+' '}<span class="nm">${esc(e.title||T.label)}</span></div>`);
+      else (e.people||[]).filter(p=>!filterPerson||p===filterPerson).forEach(p=>chips.push(`<div class="chip pchip" style="background:${T.bg};color:${T.fg}" data-ev="${esc(e.id)}" title="${esc(pname(p)+' – '+T.label)}">${avaHtml({id:p},'xs')}<span class="nm">${esc(pname(p))}</span><span class="kc">${esc(T.code)}</span></div>`));
+    });
+    cells += `<div class="day ${d.getMonth()!==m-1?'dim':''} ${isHol(s)?'hol':isWeekend(s)?'off':''} ${s===t?'today':''}" data-dayc="${s}">
+      <div class="dnum">${d.getDate()}${isHol(s)?`<span class="h">${esc(S.holidays[s].name||'วันหยุด')}</span>`:''}</div>
+      ${chips.join('')}</div>`;
+  }
+  const opts = '<option value="">ทุกคน</option>'+staffList().map(p=>`<option value="${esc(p.id)}" ${p.id===filterPerson?'selected':''}>${esc(p.nick||shortName(p.name))}</option>`).join('');
+  const title = kind==='agenda' ? 'ปฏิทินประชุม / นัดหมาย' : 'ปฏิทินวันลา';
+  return `<div class="daynav"><button class="round" data-mon="-1">‹</button><h2>${title} · ${TH_M[m-1]} ${y+543}</h2><button class="round" data-mon="1">›</button>
+    <button class="btn sm" data-mon="0">เดือนนี้</button><div class="spacer"></div>
+    <select class="inp" style="width:auto" id="filterP">${opts}</select>
+    ${S.canWrite?`<button class="btn sm pri" data-quick="${kind==='agenda'?'meet':'vac'}">+ ${kind==='agenda'?'เพิ่มประชุม/นัดหมาย':'ลงวันลา'}</button>`:''}</div>
+    ${legendHtml(kinds)}
+    <div class="muted" style="font-size:13px;margin:-4px 0 8px">คลิกวันที่เพื่อดูรายละเอียดทั้งวัน · คลิกรายการเพื่อดูรายละเอียด</div>
+    <div class="mhead">${TH_D.map(x=>`<div>${x}</div>`).join('')}</div><div class="month">${cells}</div>`;
+}
+function legendHtml(kinds){
+  return `<div class="legend">${Object.entries(TYPES).filter(([k])=>!kinds||kinds.includes(k)).map(([k,T])=>`<span class="pill" style="background:${T.bg};color:${T.fg}">${T.emoji} ${T.label}${T.code?` <span class="kbd">${T.code}</span>`:''}</span>`).join('')}
+  <span class="pill" style="background:var(--off)">เสาร์-อาทิตย์</span><span class="pill" style="background:var(--hol)">วันหยุดราชการ</span></div>`;
+}
+
+function vTeam(){
+  const [y,m] = cursorMonth.split('-').map(Number), n = new Date(y,m,0).getDate(), t = todayIso();
+  const opts = {autoP: lsGet('teamcal-autop')!=='0', cutoff: t, meet: lsGet('teamcal-meet')==='1'};
+  let head = '<th class="nm">ชื่อ</th>';
+  for (let d=1; d<=n; d++){ const s = y+'-'+pad(m)+'-'+pad(d);
+    head += `<th class="${isHol(s)?'hol':isWeekend(s)?'off':''} ${s===t?'today':''}" title="${isHol(s)?esc(S.holidays[s].name):''}">${d}<small>${TH_D[parse(s).getDay()]}</small></th>`; }
+  let body=''; let lastG=null;
+  for (const p of staffList()){
+    const g = p.group||GROUPS[0];
+    if (g!==lastG){ body += `<tr class="grp"><td colspan="${n+1}">${esc(g)}</td></tr>`; lastG=g; }
+    let row = `<td class="nm"><span class="nmw">${avaHtml(p,true)}${esc(p.nick||shortName(p.name))}</span></td>`;
+    for (let d=1; d<=n; d++){ const s = y+'-'+pad(m)+'-'+pad(d);
+      const c = codeFor(p.id, s, opts);
+      const k = c ? Object.keys(TYPES).find(k=>TYPES[k].code===c) : null;
+      const T = k ? TYPES[k] : null;
+      const tasks = eventsOn(s,p.id).filter(e=>e.type==='task'||e.type==='other'||(e.type==='meet'&&!opts.meet));
+      const inner = c==='P' ? '<span class="code" style="color:#2b8a3e">✓</span>' : T ? `<span class="code" style="background:${T.bg};color:${T.fg}">${esc(c)}</span>` : '';
+      row += `<td class="${isHol(s)?'hol':isWeekend(s)?'off':''}" data-cell="${esc(p.id)}|${s}" title="${esc(eventsOn(s,p.id).map(e=>(TYPES[e.type]||TYPES.other).label+(e.title?': '+e.title:'')).join('\n'))}">${inner}${tasks.length?'<sup>•</sup>':''}</td>`; }
+    body += `<tr>${row}</tr>`;
+  }
+  return `<div class="daynav"><button class="round" data-mon="-1">‹</button><h2>${TH_M[m-1]} ${y+543}</h2><button class="round" data-mon="1">›</button>
+    <button class="btn sm" data-mon="0">เดือนนี้</button><div class="spacer"></div>
+    <span class="muted" style="font-size:13px">✓ = มาปฏิบัติงาน (เติมให้อัตโนมัติวันทำการที่ผ่านมา) · • = มีนัด/งานส่ง · คลิกช่องเพื่อลงรายการ</span></div>
+    ${legendHtml()}
+    <div class="tgwrap"><table class="tg"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+}
+
+function fyStats(pid, fy){
+  const [a,b] = fyRange(fy); const r = {sick:[0,0],biz:[0,0],vac:0,late:0,trip:0,train:0,wfh:0};
+  const opts = {autoP:false, meet:false, cutoff:''};
+  let prev=null;
+  for (let s=a; s<=b; s=addDays(s,1)){
+    const c = codeFor(pid, s, opts);
+    if (c==='ส') r.late++;
+    if (c==='รช') r.trip++;
+    if (c==='อ') r.train++;
+    if (c==='w') r.wfh++;
+    if (c==='พ') r.vac++;
+    if (isOff(s) && c!=='ป' && c!=='ก') continue;
+    if (c==='ป'){ r.sick[1]++; if(prev!=='ป') r.sick[0]++; }
+    if (c==='ก'){ r.biz[1]++; if(prev!=='ก') r.biz[0]++; }
+    prev = c||null;
+  }
+  return r;
+}
+function vSummary(){
+  const fy = Number(lsGet('teamcal-fy')) || fyOf(todayIso());
+  const rows = staffList().map(p=>{
+    const r = fyStats(p.id, fy), tot = (Number(p.carry)||0)+(Number(p.quota)||0), left = tot - r.vac;
+    const pct = tot ? Math.min(100, Math.round(r.vac/tot*100)) : 0;
+    return `<tr><td class="l"><div class="nmw">${avaHtml(p)}<div>${esc(p.nick||shortName(p.name))}<div class="muted" style="font-size:12px">${esc(p.name||'')}</div></div></div></td>
+      <td>${r.sick[0]} / <b>${r.sick[1]}</b></td><td>${r.biz[0]} / <b>${r.biz[1]}</b></td><td><b>${r.vac}</b></td>
+      <td><div class="row" style="justify-content:center;gap:6px"><div class="bar" title="ใช้ไป ${pct}%"><i style="width:${pct}%"></i></div><b style="color:${left<=2?'#d6336c':'inherit'}">${left}</b><span class="muted" style="font-size:12px">/ ${tot}</span></div></td>
+      <td>${r.late}</td><td>${r.trip}</td><td>${r.train}</td><td>${r.wfh}</td></tr>`;
+  }).join('');
+  const fys = []; for (let f=fyOf(todayIso())-1; f<=fyOf(todayIso())+1; f++) fys.push(f);
+  return `<div class="daynav"><h2>สรุปวันลา ปีงบประมาณ</h2><select class="inp" style="width:auto" id="fySel">${fys.map(f=>`<option ${f===fy?'selected':''}>${f}</option>`).join('')}</select>
+    <span class="muted" style="font-size:13px">(1 ต.ค. ${fy-1} – 30 ก.ย. ${fy}) · นับเฉพาะวันทำการ ยกเว้นไปราชการ/อบรมนับทุกวัน</span></div>
+    <div class="card" style="overflow:auto"><table class="sum"><thead><tr><th style="text-align:left">ชื่อ</th><th>ป่วย<br><small>ครั้ง / วัน</small></th><th>กิจ<br><small>ครั้ง / วัน</small></th><th>พักผ่อน<br><small>ใช้ไป (วัน)</small></th><th>คงเหลือพักผ่อน<br><small>สะสม+ปีนี้</small></th><th>สาย<br><small>ครั้ง</small></th><th>รช<br><small>วัน</small></th><th>อบรม<br><small>วัน</small></th><th>WFH<br><small>วัน</small></th></tr></thead>
+    <tbody>${rows || '<tr><td colspan="9" class="empty">ยังไม่มีรายชื่อ</td></tr>'}</tbody></table></div>`;
+}
+
+function vSettings(){
+  const ppl = staffList();
+  const staffHtml = ppl.map(p=>`<div class="li">${avaHtml(p)}
+    <div class="grow">${esc(p.name)}${p.nick?` <span class="muted">(${esc(p.nick)})</span>`:''}<small>${esc(p.group||GROUPS[0])} · ${esc(p.position||'-')} · พักผ่อนสะสม ${Number(p.carry)||0}+${Number(p.quota)||0}</small></div>
+    ${S.canWrite?`<button class="ic" data-edit-staff="${esc(p.id)}" title="แก้ไข">แก้ไข</button>`:''}</div>`).join('') || '<div class="muted">ยังไม่มีรายชื่อ</div>';
+  const hols = Object.entries(S.holidays).sort((a,b)=>a[0].localeCompare(b[0])).filter(([d])=>d>=addDays(todayIso(),-400));
+  const holHtml = hols.map(([d,h])=>`<div class="li"><div class="grow">${thDate(d)} <small>${esc(h.name||'')}</small></div>${S.canWrite?`<button class="ic" data-del-hol="${d}" title="ลบ">ลบ</button>`:''}</div>`).join('') || '<div class="muted">ยังไม่มีวันหยุด</div>';
+  const autop = lsGet('teamcal-autop')!=='0', meet = lsGet('teamcal-meet')==='1';
+  return `<div class="set-grid">
+    <div class="card"><h3 class="mali" style="margin-top:0">Export บัญชีลงเวลา (Excel)</h3>
+      <p class="muted" style="font-size:14px;margin-top:0">ส่งออกเป็นไฟล์ตามแบบ <b>บัญชีสรุปผลการมาปฏิบัติราชการ ปีงบประมาณ 2570</b> ที่ให้มา — รหัส ป / ก / พ / รช / อ / ศ / w / ส / ปช ลงในช่องวันที่ พร้อมสูตรนับวันเดิม</p>
+      <label class="f">เติม ✓ (P = มาปฏิบัติงาน) วันทำการที่ไม่มีรายการ ถึงวันที่
+        <input type="date" class="inp" id="xCut" value="${todayIso()}"></label>
+      <label class="row" style="margin:10px 0;font-size:14px"><input type="checkbox" id="xAutoP" ${autop?'checked':''}> เติม ✓ อัตโนมัติ</label>
+      <label class="row" style="margin:0 0 12px;font-size:14px;flex-wrap:nowrap;align-items:flex-start"><input type="checkbox" id="xMeet" ${meet?'checked':''}> ลง “ปช” ในวันที่มีประชุม (ถ้าไม่ติ๊ก วันประชุมจะเป็น ✓)</label>
+      <button class="btn pri" id="xBtn">ดาวน์โหลด Excel ปีงบ 2570</button>
+      <div class="muted" id="xMsg" style="font-size:13px;margin-top:8px"></div>
+    </div>
+    <div class="card"><h3 class="mali" style="margin-top:0">ที่เก็บข้อมูล</h3>
+      <p class="muted" style="font-size:14px;margin-top:0">ข้อมูลทั้งหมดเก็บใน Google Sheet แท็บ รายการ / บุคลากร / วันหยุด หน้านี้ดึงข้อมูลใหม่ทุก 30 วินาที</p>
+      ${SHEET_URL?`<p style="font-size:14px"><a href="${esc(SHEET_URL)}" target="_blank" rel="noopener">เปิด Google Sheet</a></p>`:''}
+      <div class="muted" style="font-size:13px">โหลดล่าสุด ${esc(S.lastAt||'-')}</div>
+      <button class="btn sm" id="reloadBtn" style="margin-top:10px">โหลดข้อมูลใหม่</button>
+      <p class="muted" style="font-size:12.5px;margin-bottom:0">แก้ข้อมูลใน Sheet โดยตรงได้ แต่ระวังอย่าแก้คอลัมน์รหัส และวันที่ต้องเป็นรูปแบบ 2026-11-17</p>
+    </div>
+    <div class="card"><div class="row" style="justify-content:space-between"><h3 class="mali" style="margin:0">รายชื่อในทีม</h3>${S.canWrite?'<button class="btn sm mint" id="addStaff">＋ เพิ่มคน</button>':''}</div>
+      <p class="muted" style="font-size:13px">ลำดับและกลุ่มจะใช้เรียงในไฟล์ Excel</p><div class="list">${staffHtml}</div></div>
+    <div class="card"><h3 class="mali" style="margin-top:0">วันหยุดราชการ</h3>
+      ${S.canWrite?`<div class="fr" style="margin-bottom:10px"><input type="date" class="inp" id="hDate"><input class="inp" id="hName" placeholder="ชื่อวันหยุด"></div><button class="btn sm mint" id="addHol" style="margin-bottom:10px">＋ เพิ่มวันหยุด</button>`:''}
+      <div class="list">${holHtml}</div></div>
+  </div>`;
+}
+
+/* ================= modals ================= */
+function openModal(html){ $('#modal').innerHTML = html; $('#scrim').classList.add('show'); }
+function closeModal(){ $("#scrim").classList.remove("show"); DETAIL_DAY = null; render(); }
+$('#scrim').addEventListener('click', e=>{ if (e.target.id==='scrim') closeModal(); });
+document.addEventListener('keydown', e=>{ if (e.key==='Escape') closeModal(); });
+
+let M = null; // modal draft
+function openEvent(id, pre={}){
+  if (!S.canWrite && !id) return;
+  const e = id ? {...S.events[id]} : null;
+  const me = lsGet('teamcal-me');
+  M = e ? {id, ...e, people:[...(e.people||[])]} :
+    {id:null, type: pre.type || 'vac', start: pre.date || cursorDay, end: pre.date || cursorDay, people: pre.person ? [pre.person] : (me && S.staff[me] ? [me] : []), title:'', place:'', note:'', time:'', endTime:''};
+  drawEvent();
+}
+function drawEvent(){
+  const T = TYPES[M.type]||TYPES.other, ro = !S.canWrite;
+  const wd = (!T.single && M.end>=M.start && !T.weekend) ? workDays(M.start, M.end) : 0;
+  const by = M.by ? `<span class="muted" style="font-size:12px" data-uname="${esc(M.by)}">ลงโดย ${esc(S.names[M.by]||'…')}</span>` : '';
+  openModal(`<h2>${M.id?'แก้ไขรายการ':'ลงรายการใหม่'}</h2>
+    <div class="types">${Object.entries(TYPES).map(([k,t])=>`<button class="tbtn ${k===M.type?'on':''}" style="background:${t.bg};color:${t.fg}" data-type="${k}" ${ro?'disabled':''}><b>${t.emoji}</b>${t.label}</button>`).join('')}</div>
+    <label class="f" style="margin-bottom:6px">ใคร ${M.type==='meet'||M.type==='other'||M.type==='task'?'(เลือกได้หลายคน)':''}</label>
+    <div class="ppl" style="margin-bottom:12px">${staffList().map(p=>`<button class="pp ${M.people.includes(p.id)?'on':''}" data-pp="${esc(p.id)}" ${ro?'disabled':''}>${avaHtml(p,true)}${esc(p.nick||shortName(p.name))}</button>`).join('') || '<span class="muted">ยังไม่มีรายชื่อ — เพิ่มที่แท็บตั้งค่า</span>'}</div>
+    <div class="fr">
+      <label class="f">${T.task?'กำหนดส่ง':T.single?'วันที่':'ตั้งแต่วันที่'}<input type="date" class="inp" id="mStart" value="${M.start}" ${ro?'disabled':''}></label>
+      ${T.single?'<div></div>':`<label class="f">ถึงวันที่<input type="date" class="inp" id="mEnd" value="${M.end||M.start}" ${ro?'disabled':''}></label>`}
+    </div>
+    ${T.timed||T.task||M.type==='trip'||M.type==='train'?`<div class="fr" style="margin-top:10px">
+      <label class="f">เวลา${T.task?' (ถ้ามี)':''}<input type="time" class="inp" id="mTime" value="${esc(M.time||'')}" ${ro?'disabled':''}></label>
+      <label class="f">ถึงเวลา<input type="time" class="inp" id="mEndTime" value="${esc(M.endTime||'')}" ${ro?'disabled':''}></label></div>`:''}
+    <label class="f" style="margin-top:10px">${T.task?'ชื่องาน':M.type==='meet'?'หัวข้อประชุม':'เรื่อง / รายละเอียดสั้นๆ'}<input class="inp" id="mTitle" value="${esc(M.title||'')}" placeholder="${T.task?'เช่น รายงาน AD Biweekly':M.type==='meet'?'เช่น ประชุมกอง':'(ไม่ใส่ก็ได้)'}" ${ro?'disabled':''}></label>
+    ${T.task?'':`<label class="f" style="margin-top:10px">สถานที่<input class="inp" id="mPlace" value="${esc(M.place||'')}" placeholder="เช่น นครสวรรค์" ${ro?'disabled':''}></label>`}
+    <label class="f" style="margin-top:10px">หมายเหตุ<textarea class="inp" id="mNote" rows="2" ${ro?'disabled':''}>${esc(M.note||'')}</textarea></label>
+    ${T.task?`<label class="row" style="margin-top:10px;font-size:14px"><input type="checkbox" id="mDone" ${M.done?'checked':''} ${ro?'disabled':''}> ส่งแล้ว / เสร็จแล้ว</label>`:''}
+    ${wd?`<div class="pill" style="background:var(--lemon2);margin-top:10px">รวม ${wd} วันทำการ</div>`:''}
+    <div class="mfoot"><div class="left">${M.id&&!ro?'<button class="btn danger" id="mDel">ลบ</button>':''} ${by}</div>
+      <button class="btn ghost" id="mCancel">${ro?'ปิด':'ยกเลิก'}</button>${ro?'':'<button class="btn pri" id="mSave">บันทึก</button>'}</div>`);
+  hydrateNames();
+}
+function readEventForm(){
+  const v = id => { const el = $('#'+id); return el ? el.value : undefined; };
+  if (v('mStart')!==undefined) M.start = v('mStart') || M.start;
+  if (v('mEnd')!==undefined) M.end = v('mEnd') || M.start;
+  const T = TYPES[M.type]||TYPES.other; if (T.single) M.end = M.start;
+  for (const [k,id] of [['time','mTime'],['endTime','mEndTime'],['title','mTitle'],['place','mPlace'],['note','mNote']]) { const x=v(id); if (x!==undefined) M[k]=x.trim(); }
+  const d = $('#mDone'); if (d) M.done = d.checked;
+}
+async function saveEvent(){
+  readEventForm();
+  if (!M.people.length) return toast('เลือกอย่างน้อย 1 คนนะ');
+  if (M.end < M.start) return toast('วันที่สิ้นสุดต้องไม่ก่อนวันเริ่ม');
+  const T = TYPES[M.type];
+  if (!T.timed && !T.task && !['trip','train'].includes(M.type)) { M.time=''; M.endTime=''; }
+  const data = {type:M.type, start:M.start, end:M.end, people:M.people, title:M.title||'', place:M.place||'', note:M.note||'', time:M.time||'', endTime:M.endTime||'',
+    done: !!M.done, by: (S.staff[lsGet('teamcal-me')] ? pname(lsGet('teamcal-me')) : (M.by || '')), updatedAt: ''};
+  const id = M.id || uid();
+  closeModal();
+  if (await guard(store.set('events', id, data))) toast('บันทึกแล้ว ');
+}
+
+function openStaff(id){
+  const p = id ? {...S.staff[id]} : {name:'', nick:'', position:'', group:GROUPS[0], carry:0, quota:10, emoji: AVAS[Object.keys(S.staff).length % AVAS.length], order: Object.keys(S.staff).length+1};
+  openModal(`<h2>${id?'แก้ไขรายชื่อ':'เพิ่มบุคลากร'}</h2>
+    <label class="f">ชื่อ-สกุล (ตามที่ใช้ในบัญชีลงเวลา)<input class="inp" id="sName" value="${esc(p.name)}" placeholder="นายสมชาย ใจดี"></label>
+    <div class="fr" style="margin-top:10px"><label class="f">ชื่อเล่น (โชว์บนปฏิทิน)<input class="inp" id="sNick" value="${esc(p.nick||'')}"></label>
+      <label class="f">ตำแหน่ง<input class="inp" id="sPos" value="${esc(p.position||'')}"></label></div>
+    <div class="fr" style="margin-top:10px"><label class="f">กลุ่ม<select class="inp" id="sGroup">${GROUPS.map(g=>`<option ${g===(p.group||GROUPS[0])?'selected':''}>${g}</option>`).join('')}</select></label>
+      <label class="f">ลำดับในกลุ่ม<input type="number" class="inp" id="sOrder" value="${esc(p.order??'')}"></label></div>
+    <div class="fr" style="margin-top:10px"><label class="f">วันลาพักผ่อนคงเหลือยกมา (ปีก่อน)<input type="number" step="0.5" class="inp" id="sCarry" value="${esc(p.carry??0)}"></label>
+      <label class="f">สิทธิ์ลาพักผ่อนปีนี้<input type="number" step="0.5" class="inp" id="sQuota" value="${esc(p.quota??10)}"></label></div>
+    <div class="mfoot"><div class="left">${id?'<button class="btn danger" id="sDel">ลบคนนี้</button>':''}</div>
+      <button class="btn ghost" id="mCancel">ยกเลิก</button><button class="btn pri" id="sSave">บันทึก</button></div>`);
+  $('#modal').dataset.staff = id || '';
+  $('#modal').dataset.ava = p.emoji || '';
+}
+
+
+/* ================= detail views (read-only) ================= */
+let DETAIL_DAY = null;
+const rangeTxt = e => (e.end && e.end!==e.start) ? `${thDate(e.start)} – ${thDate(e.end)}` : thDate(e.start);
+const timeTxt = e => e.time ? e.time + (e.endTime ? '–' + e.endTime : '') + ' น.' : '';
+function detailRow(label, val){ return val ? `<div class="drow"><span class="lbl">${label}</span><div>${val}</div></div>` : ''; }
+function openDetail(id){
+  const e = S.events[id]; if (!e) return;
+  const T = TYPES[e.type] || TYPES.other;
+  const wd = (!T.single && !T.weekend && !T.timed && !T.task) ? workDays(e.start, e.end||e.start) : 0;
+  openModal(`<div class="row" style="gap:8px;margin-bottom:6px"><span class="pill" style="background:${T.bg};color:${T.fg}">${T.emoji} ${T.label}${T.code?` · ${esc(T.code)}`:''}</span></div>
+    <h2 style="margin:4px 0 14px">${esc(e.title || T.label)}</h2>
+    ${detailRow(T.task?'กำหนดส่ง':'วันที่', esc(rangeTxt({...e, id})) + (wd?` <span class="muted">(${wd} วันทำการ)</span>`:''))}
+    ${detailRow('เวลา', esc(timeTxt(e)))}
+    ${detailRow('สถานที่', esc(e.place||''))}
+    ${detailRow(T.task?'ผู้รับผิดชอบ':(e.type==='meet'||e.type==='other')?'ผู้เข้าร่วม':'ผู้ลา / ผู้ไป', whoHtml(e))}
+    ${T.task?detailRow('สถานะ', e.done?'<span style="color:#2b8a3e;font-weight:600">ส่งแล้ว</span>':'<span style="color:#c92a2a;font-weight:600">ยังไม่ส่ง</span>'):''}
+    ${detailRow('หมายเหตุ', esc(e.note||'').replace(/\n/g,'<br>'))}
+    ${detailRow('ลงโดย', esc(e.by||''))}
+    <div class="mfoot"><div class="left">${DETAIL_DAY?'<button class="btn ghost" id="dBack">‹ กลับไปวันที่</button>':''}</div>
+      <button class="btn ghost" id="mCancel">ปิด</button>${S.canWrite?`<button class="btn pri" data-edit-ev="${esc(id)}">แก้ไข</button>`:''}</div>`);
+}
+function openDay(s){
+  DETAIL_DAY = s;
+  const evs = eventsOn(s);
+  const leaves = evs.filter(e=>LEAVE_KINDS.includes(e.type));
+  const meets = evs.filter(e=>e.type==='meet'), tasks = evs.filter(e=>e.type==='task'), appts = evs.filter(e=>e.type==='other');
+  const line = e => { const T = TYPES[e.type]||TYPES.other;
+    return `<div class="dline" data-ev="${esc(e.id)}"><span class="pill" style="background:${T.bg};color:${T.fg};flex:none">${T.emoji} ${T.label}</span>
+      <div style="flex:1;min-width:0"><div class="ag-title" style="font-size:14.5px">${esc(e.title || '')}${e.title?'':''}</div>
+      <div class="ag-meta">${[timeTxt(e), e.place?'ที่ '+e.place:'', (e.end&&e.end!==e.start)?rangeTxt(e):''].filter(Boolean).map(esc).join(' · ')}</div>
+      <div style="margin-top:3px">${whoHtml(e)}</div></div><span class="muted">›</span></div>`; };
+  const sec = (title, list, empty) => `<h3 class="dsec">${title} <span class="cnt">${list.length}</span></h3>${list.map(line).join('') || `<div class="muted" style="font-size:13.5px;padding:4px 0 8px">${empty}</div>`}`;
+  const off = isHol(s) ? `<span class="pill" style="background:var(--hol)">${esc(S.holidays[s].name||'วันหยุดราชการ')}</span>` : isWeekend(s) ? '<span class="pill" style="background:var(--off)">วันหยุดเสาร์-อาทิตย์</span>' : '';
+  openModal(`<h2 style="margin-bottom:6px">${thDate(s,true)}</h2>${off}
+    <div style="margin-top:10px">
+    ${sec('ลา / ไปราชการ / อบรม / WFH', leaves, 'ไม่มีใครลาหรือไปราชการ')}
+    ${sec('ประชุม', meets, 'ไม่มีประชุม')}
+    ${sec('งานที่ต้องส่ง', tasks, 'ไม่มีงานที่ต้องส่ง')}
+    ${sec('นัดหมาย', appts, 'ไม่มีนัดหมาย')}</div>
+    <div class="mfoot"><button class="btn ghost" id="mCancel">ปิด</button>${S.canWrite?`<button class="btn pri" data-add-day="${s}">+ ลงรายการวันนี้</button>`:''}</div>`);
+}
+
+/* ================= events (delegated) ================= */
+document.addEventListener('click', async ev=>{
+  const t = ev.target.closest('button, [data-ev], [data-dayc], [data-cell], a');
+  if (!t) return;
+  const d = t.dataset;
+  if (d.done !== undefined && t.dataset.done) { const e = S.events[d.done]; if (!e || !S.canWrite) return;
+    await guard(store.set('events', d.done, {...e, done: !e.done, updatedAt:new Date().toISOString()})); return; }
+  if (d.editEv) { openEvent(d.editEv); return; }
+  if (t.id==='dBack') { openDay(DETAIL_DAY); return; }
+  if (d.addDay) { const s0 = d.addDay; DETAIL_DAY = null; openEvent(null, {date:s0, type: view==='agenda'?'meet':view==='leave'?'vac':'meet'}); return; }
+  if (d.ev) { ev.stopPropagation(); if (!$('#scrim').classList.contains('show')) DETAIL_DAY = null; openDetail(d.ev); return; }
+  if (d.day !== undefined) { cursorDay = d.day==='0' ? todayIso() : addDays(cursorDay, Number(d.day)); render(); return; }
+  if (d.mon !== undefined) { if (d.mon==='0') cursorMonth = todayIso().slice(0,7); else { const [y,m]=cursorMonth.split('-').map(Number); const n=new Date(y, m-1+Number(d.mon), 1); cursorMonth = n.getFullYear()+'-'+pad(n.getMonth()+1); } render(); return; }
+  if (d.dayc) { openDay(d.dayc); return; }
+  if (d.cell) { const [pid, s] = d.cell.split('|'); const evs = eventsOn(s, pid); if (evs.length===1) { DETAIL_DAY = null; openDetail(evs[0].id); } else if (evs.length>1) openDay(s); else if (S.canWrite) openEvent(null,{person:pid,date:s}); return; }
+  if (d.quick) { openEvent(null, {type:d.quick, date: view==='today' ? cursorDay : (cursorMonth===todayIso().slice(0,7) ? todayIso() : cursorMonth+'-01')}); return; }
+  if (d.addPerson) { openEvent(null, {person:d.addPerson, date:cursorDay}); return; }
+  if (t.id==='addBtn') { openEvent(null, {date: view==='today'?cursorDay:todayIso()}); return; }
+  if (d.type) { readEventForm(); M.type = d.type; if (TYPES[d.type].single) M.end = M.start; drawEvent(); return; }
+  if (d.pp) { readEventForm(); const i = M.people.indexOf(d.pp); if (i>=0) M.people.splice(i,1); else M.people.push(d.pp); drawEvent(); return; }
+  if (t.id==='mCancel') { closeModal(); return; }
+  if (t.id==='mSave') { saveEvent(); return; }
+  if (t.id==='mDel') { if (t.dataset.sure) { const id=M.id; closeModal(); if (await guard(store.del('events', id))) toast('ลบแล้ว'); } else { t.dataset.sure='1'; t.textContent='กดอีกครั้งเพื่อยืนยันลบ'; } return; }
+  if (t.id==='addStaff') { openStaff(null); return; }
+  if (d.editStaff) { openStaff(d.editStaff); return; }
+  if (d.ava) { $('#modal').dataset.ava = d.ava; document.querySelectorAll('#sAva .pp').forEach(b=>b.classList.toggle('on', b.dataset.ava===d.ava)); return; }
+  if (t.id==='sSave') {
+    const id = $('#modal').dataset.staff || uid(); const name = $('#sName').value.trim();
+    if (!name) return toast('ใส่ชื่อก่อนนะ');
+    const data = {name, nick: $('#sNick').value.trim(), position: $('#sPos').value.trim(), group: $('#sGroup').value,
+      order: Number($('#sOrder').value)||999, carry: Number($('#sCarry').value)||0, quota: Number($('#sQuota').value)||0, emoji: $('#modal').dataset.ava || ''};
+    closeModal(); if (await guard(store.set('staff', id, data))) toast('บันทึกรายชื่อแล้ว'); return; }
+  if (t.id==='sDel') { if (t.dataset.sure) { const id=$('#modal').dataset.staff; closeModal(); if (await guard(store.del('staff', id))) toast('ลบรายชื่อแล้ว'); } else { t.dataset.sure='1'; t.textContent='กดอีกครั้งเพื่อยืนยัน'; } return; }
+  if (t.id==='addHol') { const dt=$('#hDate').value, nm=$('#hName').value.trim(); if(!dt) return toast('เลือกวันที่ก่อนนะ');
+    if (await guard(store.set('holidays', dt, {name: nm||'วันหยุดราชการ'}))) toast('เพิ่มวันหยุดแล้ว'); return; }
+  if (d.delHol) { if (await guard(store.del('holidays', d.delHol))) toast('ลบวันหยุดแล้ว'); return; }
+  if (t.id==='xBtn') { doExport(); return; }
+  if (t.id==='reloadBtn') { loadAll().then(()=>toast('โหลดข้อมูลใหม่แล้ว')); return; }
+});
+document.addEventListener('change', ev=>{
+  const t = ev.target;
+  if (t.id==='pickDay' && t.value) { cursorDay = t.value; render(); }
+  if (t.id==='filterP') { filterPerson = t.value; render(); }
+  if (t.id==='meSel') { lsSet('teamcal-me', t.value); toast(t.value ? 'ตั้งค่าผู้ใช้งานเป็น '+pname(t.value) : 'ล้างแล้ว'); }
+  if (t.id==='fySel') { lsSet('teamcal-fy', t.value); render(); }
+  if (t.id==='xAutoP') lsSet('teamcal-autop', t.checked?'1':'0');
+  if (t.id==='xMeet') lsSet('teamcal-meet', t.checked?'1':'0');
+});
+function route(){ const h = location.hash.replace('#',''); view = h==='month' ? 'leave' : ['today','leave','agenda','team','summary','settings'].includes(h) ? h : 'today'; render(); }
+window.addEventListener('hashchange', route);
+
+/* ================= who entered ================= */
+function hydrateNames(){ document.querySelectorAll('[data-uname]').forEach(el=>{ el.textContent = 'ลงโดย ' + el.dataset.uname; }); }
+
+/* ================= export ================= */
+function loadScript(src){ return new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=rej; document.head.appendChild(s); }); }
+let TPL_B64 = null, LAST_EXPORT = null;
+async function ensureLibs(){
+  if (!window.ExcelJS) { try { await loadScript('https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js'); } catch(e) { await loadScript('https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js'); } }
+  if (!TPL_B64) { const r = await fetch('template.xlsx'); if (!r.ok) throw new Error('ไม่พบไฟล์ template.xlsx'); TPL_B64 = await r.arrayBuffer(); }
+}
+async function doExport(){
+  const msg = $('#xMsg'), btn = $('#xBtn'); btn.disabled = true; msg.textContent = 'กำลังเตรียมไฟล์…';
+  try {
+    await ensureLibs();
+    const cutoff = $('#xCut').value || todayIso(), opts = {autoP: $('#xAutoP').checked, meet: $('#xMeet').checked, cutoff};
+    const [a,b] = fyRange(2570); const staff = staffList(); const codes = {};
+    for (const p of staff){ const m = codes[p.id] = {}; for (let s=a; s<=b; s=addDays(s,1)){ const c = codeFor(p.id, s, opts); if (c) m[s]=c; } }
+    const buf = await TeamExport.fillTemplate(ExcelJS, TPL_B64.slice(0), {staff, codes, holidays: Object.keys(S.holidays)});
+    const fname = `บัญชีสรุปการมาปฏิบัติราชการ_ปีงบ2570_ถึง${cutoff}.xlsx`;
+        const blob = new Blob([buf], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = fname;
+    document.body.appendChild(link); link.click(); link.remove();
+    msg.textContent = 'ดาวน์โหลดแล้ว';
+  } catch(e) { console.error(e); msg.textContent = 'สร้างไฟล์ไม่สำเร็จ: ' + (e.message||e); }
+  btn.disabled = false;
+}
+/* ================= boot ================= */
+route();
+loadAll();
+setInterval(()=>{ if (document.visibilityState==='visible' && !$('#scrim').classList.contains('show')) loadAll(); }, 30000);
+document.addEventListener('visibilitychange', ()=>{ if (document.visibilityState==='visible') loadAll(); });
+</script>
+</body>
+</html>
