@@ -194,6 +194,11 @@ label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--so
 .dline:hover{background:var(--pink2)}
 .tsel{display:flex;align-items:center;gap:6px}
 .tsel select{width:auto;min-width:70px}
+.achip{white-space:normal;padding:3px 6px 4px}
+.achip .at{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.achip .aw{display:flex;flex-wrap:wrap;gap:2px 6px;margin-top:2px;align-items:center}
+.achip .awp{display:inline-flex;align-items:center;gap:3px;color:var(--ink);font-size:11px}
+.achip .pic.xs{width:18px;height:18px}
 .kbd{font-weight:700}
 </style>
 </head>
@@ -598,7 +603,10 @@ function vMonth(kind){
     const evs = eventsOn(s, filterPerson).filter(e=>kinds.includes(e.type));
     const chips = [];
     evs.forEach(e=>{ const T=TYPES[e.type]||TYPES.other;
-      if (kind==='agenda') chips.push(`<div class="chip" style="background:${T.bg};color:${T.fg}" data-ev="${esc(e.id)}" title="${esc((e.time?thT(e.time)+' น. ':'')+(e.title||T.label)+(e.place?' @ '+e.place:''))}">${e.time?`<b>${esc(thT(e.time))}</b> `:T.emoji+' '}<span class="nm">${esc(e.title||T.label)}</span></div>`);
+      if (kind==='agenda') { const ppl = (e.people||[]); const show = ppl.slice(0,5);
+        chips.push(`<div class="chip achip" style="background:${T.bg};color:${T.fg}" data-ev="${esc(e.id)}" title="${esc((e.time?thT(e.time)+' น. ':'')+(e.title||T.label)+(e.place?' @ '+e.place:'')+' — '+ppl.map(pname).join(', '))}">
+          <div class="at">${e.time?`<b>${esc(thT(e.time))}</b> `:T.emoji+' '}<span class="nm">${esc(e.title||T.label)}</span></div>
+          <div class="aw">${show.map(id=>`<span class="awp">${avaHtml({id},'xs')}${ppl.length<=2?`<span class="nm">${esc(pname(id))}</span>`:''}</span>`).join('')}${ppl.length>5?`<span class="more">+${ppl.length-5}</span>`:''}</div></div>`); }
       else (e.people||[]).filter(p=>!filterPerson||p===filterPerson).forEach(p=>chips.push(`<div class="chip pchip" style="background:${T.bg};color:${T.fg}" data-ev="${esc(e.id)}" title="${esc(pname(p)+' – '+T.label)}">${avaHtml({id:p},'xs')}<span class="nm">${esc(pname(p))}</span><span class="kc">${esc(T.code)}</span></div>`));
     });
     cells += `<div class="day ${d.getMonth()!==m-1?'dim':''} ${isHol(s)?'hol':isWeekend(s)?'off':''} ${s===t?'today':''}" data-dayc="${s}">
