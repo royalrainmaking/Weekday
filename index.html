@@ -908,7 +908,8 @@ function drawEvent(){
   hydrateNames();
 }
 /* ---------- เอกสารแนบ (หนังสืออนุมัติไปราชการ/อบรม) ---------- */
-const ATTACH_TYPES = ['trip','train'];
+const ATTACH_TYPES = ['sick','biz','vac','study','trip','train'];
+const ATTACH_HINT = { sick:'ใบลาป่วย / ใบรับรองแพทย์', biz:'ใบลากิจ', vac:'ใบลาพักผ่อน', study:'ใบลาไปศึกษา / หนังสืออนุมัติ', trip:'หนังสืออนุมัติให้ไปราชการ', train:'หนังสืออนุมัติให้เข้าอบรม' };
 const ATTACH_MAX_MB = 10;
 const fileIcon = n => /\.pdf$/i.test(n) ? '📄' : /\.(jpe?g|png|gif|webp|heic|heif)$/i.test(n) ? '🖼️' : '📎';
 const safeUrl = u => /^https:\/\/drive\.google\.com\//.test(String(u||'')) ? u : '#';
@@ -923,7 +924,7 @@ function attachForm(ro){
       <a href="${esc(safeUrl(f.url))}" target="_blank" rel="noopener" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${fileIcon(f.name)} ${esc(f.name)}</a>
       ${ro?'':`<button class="btn ghost" data-rmfile="${i}" style="padding:2px 10px">ลบ</button>`}</div>`).join('');
   const busy = M.uploading ? `<div class="upbusy"><span class="spin"></span><span>กำลังอัปโหลด ${M.uploading} ไฟล์… กรุณารอสักครู่ อย่าปิดหน้านี้</span></div>` : '';
-  return `<div class="f" style="margin-top:10px">เอกสารแนบ <span class="muted" style="font-weight:400">(เช่น หนังสืออนุมัติให้ไปราชการ — PDF/รูป/Word ไม่เกิน ${ATTACH_MAX_MB} MB)</span>
+  return `<div class="f" style="margin-top:10px">เอกสารแนบ <span class="muted" style="font-weight:400">(เช่น ${ATTACH_HINT[M.type]||'เอกสารประกอบ'} — PDF/รูป/Word ไม่เกิน ${ATTACH_MAX_MB} MB)</span>
     ${list}${busy}
     ${ro||M.uploading?'':`<label class="btn ghost" style="margin-top:6px;display:inline-block;cursor:pointer">📎 แนบไฟล์<input type="file" id="mFile" accept=".pdf,image/*,.doc,.docx" multiple hidden></label>`}</div>`;
 }
