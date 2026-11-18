@@ -299,6 +299,9 @@ nav.tabs .ls{display:none}
   .toast{bottom:calc(150px + env(safe-area-inset-bottom))}
 }
 @keyframes sheet{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
+.spin{width:18px;height:18px;border:3px solid rgba(0,0,0,.12);border-top-color:var(--pink,#e8668f);border-radius:50%;animation:spin .8s linear infinite;flex:none;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.upbusy{display:flex;align-items:center;gap:10px;padding:10px 12px;margin:6px 0;border-radius:12px;background:var(--lemon2,#fff6d6);font-size:14px}
 </style>
 </head>
 <body>
@@ -557,7 +560,7 @@ const S = { staff:{}, events:{}, holidays:{}, ready:{staff:false,events:false,ho
 let SHEET_URL = '';
 let view = 'today', cursorDay = todayIso(), cursorMonth = todayIso().slice(0,7), filterPerson = '';
 // URL ของ Apps Script Web App (Deploy > Web app > /exec)
-const API_URL = 'https://script.google.com/macros/s/AKfycbxELpwWsffPsROEYeRCZwMLCmzyt0mRUMLb_MondEjx0zzA0LLQYQNZnSt2IZYHKfZFbQ/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbwv16nFYEuuBCLYmit9b5eKacIxo_R53J1IQK2oDlF7zJwvNFEKNHZDV62JahBpuhrD1A/exec';
 async function api(payload){
   const r = payload
     ? await fetch(API_URL, {method:'POST', body: JSON.stringify(payload)})   // text/plain: ไม่ต้อง preflight
@@ -658,7 +661,7 @@ function itemHtml(e, opts={}){
   const range = (e.end && e.end!==e.start) ? `${thShort(e.start)} – ${thShort(e.end)}` : (opts.showDate ? thShort(e.start) : '');
   const who = opts.showWho ? (e.people||[]).map(pname).join(', ') : '';
   const sub = [e.time ? thT(e.time)+(e.endTime?'–'+thT(e.endTime):'')+' น.' : '', e.place ? ''+e.place : '', range, who].filter(Boolean).join(' · ');
-  return `<div class="item" style="background:${T.bg}" data-ev="${esc(e.id)}"><span>${T.emoji}</span><div><div class="t" style="color:${T.fg}">${esc(e.title || T.label)}${e.title?` <span class="sub">(${T.label})</span>`:''}</div>${sub?`<div class="sub">${esc(sub)}</div>`:''}</div></div>`;
+  return `<div class="item" style="background:${T.bg}" data-ev="${esc(e.id)}"><span>${T.emoji}</span><div><div class="t" style="color:${T.fg}">${esc(e.title || T.label)}${e.title?` <span class="sub">(${T.label})</span>`:''}${clipTag(e)}</div>${sub?`<div class="sub">${esc(sub)}</div>`:''}</div></div>`;
 }
 
 function vToday(){
@@ -714,7 +717,7 @@ function vMonth(kind){
         chips.push(`<div class="chip achip" style="background:${T.bg};color:${T.fg}" data-ev="${esc(e.id)}" title="${esc((e.time?thT(e.time)+' น. ':'')+(e.title||T.label)+(e.place?' @ '+e.place:'')+' — '+ppl.map(pname).join(', '))}">
           <div class="at">${e.time?`<b>${esc(thT(e.time))}</b> `:T.emoji+' '}<span class="nm">${esc(e.title||T.label)}</span></div>
           <div class="aw">${show.map(id=>`<span class="awp">${avaHtml({id},'xs')}${ppl.length<=2?`<span class="nm">${esc(pname(id))}</span>`:''}</span>`).join('')}${ppl.length>5?`<span class="more">+${ppl.length-5}</span>`:''}</div></div>`); }
-      else (e.people||[]).filter(p=>(!filterPerson||p===filterPerson) && isActive(S.staff[p], s)).forEach(p=>chips.push(`<div class="chip pchip" style="background:${T.bg};color:${T.fg}" data-ev="${esc(e.id)}" title="${esc(pname(p)+' – '+T.label)}">${avaHtml({id:p},'xs')}<span class="nm">${esc(pname(p))}</span><span class="kc">${esc(T.code)}</span></div>`));
+      else (e.people||[]).filter(p=>(!filterPerson||p===filterPerson) && isActive(S.staff[p], s)).forEach(p=>chips.push(`<div class="chip pchip" style="background:${T.bg};color:${T.fg}" data-ev="${esc(e.id)}" title="${esc(pname(p)+' – '+T.label)}">${avaHtml({id:p},'xs')}<span class="nm">${esc(pname(p))}</span><span class="kc">${esc(T.code)}</span>${(e.files||[]).length?'<span style="font-size:10px">📎</span>':''}</div>`));
     });
     let mk = '';
     if (kind==='agenda') mk = evs.slice(0,4).map(e=>`<i class="mdot" style="background:${(TYPES[e.type]||TYPES.other).fg}"></i>`).join('') + (evs.length>4?'<b>+</b>':'');
@@ -743,7 +746,7 @@ function mlistHtml(kind, list, t){
       const ppl = (e.people||[]).filter(p=>(!filterPerson||p===filterPerson) && (kind==='agenda' || isActive(S.staff[p], s)));
       if (!ppl.length) return '';
       return `<div class="mitem" data-ev="${esc(e.id)}" style="border-left-color:${T.fg}">
-        <div class="mt">${kind==='agenda' ? `${e.time?`<b>${esc(thT(e.time))}</b> `:''}${esc(e.title||T.label)}` : `<span style="color:${T.fg};font-weight:600">${T.label}</span>${e.title?' · '+esc(e.title):''}`}</div>
+        <div class="mt">${kind==='agenda' ? `${e.time?`<b>${esc(thT(e.time))}</b> `:''}${esc(e.title||T.label)}` : `<span style="color:${T.fg};font-weight:600">${T.label}</span>${e.title?' · '+esc(e.title):''}`}${clipTag(e)}</div>
         ${e.place?`<div class="ag-meta muted">${esc(e.place)}</div>`:''}
         <div class="mw">${ppl.slice(0,6).map(id=>`<span class="who">${avaHtml({id},true)}${esc(pname(id))}</span>`).join('')}${ppl.length>6?`<span class="muted">+${ppl.length-6}</span>`:''}</div></div>`; }).join('')
   }</div></div>`).join('');
@@ -866,7 +869,7 @@ function vSettings(){
 
 /* ================= modals ================= */
 function openModal(html){ $('#modal').innerHTML = html; $('#scrim').classList.add('show'); }
-function closeModal(){ $("#scrim").classList.remove("show"); DETAIL_DAY = null; render(); }
+function closeModal(){ if (M && M.uploading && document.querySelector('#modal .upbusy')) { toast('รออัปโหลดไฟล์ให้เสร็จก่อนนะ'); return; } $("#scrim").classList.remove("show"); DETAIL_DAY = null; render(); }
 $('#scrim').addEventListener('click', e=>{ if (e.target.id==='scrim') closeModal(); });
 document.addEventListener('keydown', e=>{ if (e.key==='Escape') closeModal(); });
 
@@ -875,7 +878,7 @@ function openEvent(id, pre={}){
   if (!S.canWrite && !id) return;
   const e = id ? {...S.events[id]} : null;
   const me = lsGet('teamcal-me');
-  M = e ? {id, ...e, people:[...(e.people||[])]} :
+  M = e ? {id, ...e, people:[...(e.people||[])], files:[...(e.files||[])]} :
     {id:null, type: pre.type || 'vac', start: pre.date || cursorDay, end: pre.date || cursorDay, people: pre.person ? [pre.person] : (me && S.staff[me] ? [me] : []), title:'', place:'', note:'', time:'', endTime:''};
   drawEvent();
 }
@@ -897,12 +900,52 @@ function drawEvent(){
     <label class="f" style="margin-top:10px">${T.task?'ชื่องาน':M.type==='meet'?'หัวข้อประชุม':'เรื่อง / รายละเอียดสั้นๆ'}<input class="inp" id="mTitle" value="${esc(M.title||'')}" placeholder="${T.task?'เช่น รายงาน AD Biweekly':M.type==='meet'?'เช่น ประชุมกอง':'(ไม่ใส่ก็ได้)'}" ${ro?'disabled':''}></label>
     ${T.task?'':`<label class="f" style="margin-top:10px">สถานที่<input class="inp" id="mPlace" value="${esc(M.place||'')}" placeholder="เช่น นครสวรรค์" ${ro?'disabled':''}></label>`}
     <label class="f" style="margin-top:10px">หมายเหตุ<textarea class="inp" id="mNote" rows="2" ${ro?'disabled':''}>${esc(M.note||'')}</textarea></label>
+    ${attachForm(ro)}
     ${T.task?`<label class="row" style="margin-top:10px;font-size:14px"><input type="checkbox" id="mDone" ${M.done?'checked':''} ${ro?'disabled':''}> ส่งแล้ว / เสร็จแล้ว</label>`:''}
     ${wd?`<div class="pill" style="background:var(--lemon2);margin-top:10px">รวม ${wd} วันทำการ</div>`:''}
     <div class="mfoot"><div class="left">${M.id&&!ro?'<button class="btn danger" id="mDel">ลบ</button>':''} ${by}</div>
-      <button class="btn ghost" id="mCancel">${ro?'ปิด':'ยกเลิก'}</button>${ro?'':'<button class="btn pri" id="mSave">บันทึก</button>'}</div>`);
+      <button class="btn ghost" id="mCancel">${ro?'ปิด':'ยกเลิก'}</button>${ro?'':M.uploading?'<button class="btn pri" id="mSave" disabled style="opacity:.6;display:inline-flex;align-items:center;gap:8px"><span class="spin" style="width:14px;height:14px;border-width:2px;border-top-color:#fff"></span>รออัปโหลด…</button>':'<button class="btn pri" id="mSave">บันทึก</button>'}</div>`);
   hydrateNames();
 }
+/* ---------- เอกสารแนบ (หนังสืออนุมัติไปราชการ/อบรม) ---------- */
+const ATTACH_TYPES = ['trip','train'];
+const ATTACH_MAX_MB = 10;
+const fileIcon = n => /\.pdf$/i.test(n) ? '📄' : /\.(jpe?g|png|gif|webp|heic|heif)$/i.test(n) ? '🖼️' : '📎';
+const safeUrl = u => /^https:\/\/drive\.google\.com\//.test(String(u||'')) ? u : '#';
+function filesHtml(files){
+  return (files||[]).map(f=>`<a href="${esc(safeUrl(f.url))}" target="_blank" rel="noopener" class="pill" style="display:inline-flex;gap:6px;align-items:center;margin:2px 6px 2px 0;background:var(--lemon2);color:inherit;text-decoration:none;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${fileIcon(f.name)} ${esc(f.name)} ↗</a>`).join('');
+}
+const clipTag = e => (e.files||[]).length ? `<span title="มีเอกสารแนบ ${e.files.length} ไฟล์" style="margin-left:3px">📎</span>` : '';
+const filesLinks = e => (e.files||[]).length ? `<div style="margin-top:4px;font-size:13.5px">${filesHtml(e.files)}</div>` : '';
+function attachForm(ro){
+  if (!ATTACH_TYPES.includes(M.type) && !(M.files||[]).length) return '';
+  const list = (M.files||[]).map((f,i)=>`<div class="row" style="gap:8px;margin:4px 0;font-size:14px">
+      <a href="${esc(safeUrl(f.url))}" target="_blank" rel="noopener" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${fileIcon(f.name)} ${esc(f.name)}</a>
+      ${ro?'':`<button class="btn ghost" data-rmfile="${i}" style="padding:2px 10px">ลบ</button>`}</div>`).join('');
+  const busy = M.uploading ? `<div class="upbusy"><span class="spin"></span><span>กำลังอัปโหลด ${M.uploading} ไฟล์… กรุณารอสักครู่ อย่าปิดหน้านี้</span></div>` : '';
+  return `<div class="f" style="margin-top:10px">เอกสารแนบ <span class="muted" style="font-weight:400">(เช่น หนังสืออนุมัติให้ไปราชการ — PDF/รูป/Word ไม่เกิน ${ATTACH_MAX_MB} MB)</span>
+    ${list}${busy}
+    ${ro||M.uploading?'':`<label class="btn ghost" style="margin-top:6px;display:inline-block;cursor:pointer">📎 แนบไฟล์<input type="file" id="mFile" accept=".pdf,image/*,.doc,.docx" multiple hidden></label>`}</div>`;
+}
+const fileToB64 = f => new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(',')[1] || ''); r.onerror = () => no(r.error); r.readAsDataURL(f); });
+async function uploadFiles(list){
+  readEventForm();
+  const files = [...list];
+  M.files = M.files || [];
+  for (const f of files) if (f.size > ATTACH_MAX_MB*1024*1024) { toast(`${f.name} ใหญ่เกิน ${ATTACH_MAX_MB} MB`); return; }
+  const draft = M; draft.uploading = (draft.uploading||0) + files.length; drawEvent();
+  for (const f of files) {
+    try {
+      const mime = f.type || (/\.pdf$/i.test(f.name) ? 'application/pdf' : /\.docx$/i.test(f.name) ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' : '');
+      const r = await api({action:'upload', name: f.name, mime, data: await fileToB64(f)});
+      draft.files.push(r);
+    } catch(e) { console.error(e); toast('แนบ ' + f.name + ' ไม่สำเร็จ: ' + (e.message||'ลองอีกครั้ง')); }
+    draft.uploading--;
+    if (M === draft && $('#scrim').classList.contains('show')) { readEventForm(); drawEvent(); }
+  }
+  if (M === draft && !draft.uploading) toast('แนบไฟล์แล้ว อย่าลืมกดบันทึก');
+}
+
 function readEventForm(){
   const v = id => { const el = $('#'+id); return el ? el.value : undefined; };
   if (v('mStart')!==undefined) M.start = v('mStart') || M.start;
@@ -914,13 +957,14 @@ function readEventForm(){
 }
 async function saveEvent(){
   readEventForm();
+  if (M.uploading) return toast('รออัปโหลดไฟล์ให้เสร็จก่อนนะ');
   if (!M.people.length) return toast('เลือกอย่างน้อย 1 คนนะ');
   if (M.end < M.start) return toast('วันที่สิ้นสุดต้องไม่ก่อนวันเริ่ม');
   if (M.time && M.endTime && M.start===M.end && M.endTime < M.time) return toast('เวลาสิ้นสุดต้องไม่ก่อนเวลาเริ่ม');
   const T = TYPES[M.type];
   if (!T.timed && !T.task && !['trip','train'].includes(M.type)) { M.time=''; M.endTime=''; }
   const data = {type:M.type, start:M.start, end:M.end, people:M.people, title:M.title||'', place:M.place||'', note:M.note||'', time:M.time||'', endTime:M.endTime||'',
-    done: !!M.done, by: (S.staff[lsGet('teamcal-me')] ? pname(lsGet('teamcal-me')) : (M.by || '')), updatedAt: ''};
+    done: !!M.done, files: M.files||[], by: (S.staff[lsGet('teamcal-me')] ? pname(lsGet('teamcal-me')) : (M.by || '')), updatedAt: ''};
   const id = M.id || uid();
   closeModal();
   if (await guard(store.set('events', id, data))) toast('บันทึกแล้ว ');
@@ -965,6 +1009,7 @@ function openDetail(id){
     ${detailRow(T.task?'ผู้รับผิดชอบ':(e.type==='meet'||e.type==='other')?'ผู้เข้าร่วม':'ผู้ลา / ผู้ไป', whoHtml(e))}
     ${T.task?detailRow('สถานะ', e.done?'<span style="color:#2b8a3e;font-weight:600">ส่งแล้ว</span>':'<span style="color:#c92a2a;font-weight:600">ยังไม่ส่ง</span>'):''}
     ${detailRow('หมายเหตุ', esc(e.note||'').replace(/\n/g,'<br>'))}
+    ${detailRow('เอกสารแนบ', filesHtml(e.files))}
     ${detailRow('ลงโดย', esc(e.by||''))}
     <div class="mfoot"><div class="left">${DETAIL_DAY?'<button class="btn ghost" id="dBack">‹ กลับไปวันที่</button>':''}</div>
       <button class="btn ghost" id="mCancel">ปิด</button>${S.canWrite?`<button class="btn pri" data-edit-ev="${esc(id)}">แก้ไข</button>`:''}</div>`);
@@ -978,7 +1023,7 @@ function openDay(s){
     return `<div class="dline" data-ev="${esc(e.id)}"><span class="pill" style="background:${T.bg};color:${T.fg};flex:none">${T.emoji} ${T.label}</span>
       <div style="flex:1;min-width:0"><div class="ag-title" style="font-size:14.5px">${esc(e.title || '')}${e.title?'':''}</div>
       <div class="ag-meta">${[timeTxt(e), e.place?'ที่ '+e.place:'', (e.end&&e.end!==e.start)?rangeTxt(e):''].filter(Boolean).map(esc).join(' · ')}</div>
-      <div style="margin-top:3px">${whoHtml(e)}</div></div><span class="muted">›</span></div>`; };
+      <div style="margin-top:3px">${whoHtml(e)}</div>${filesLinks(e)}</div><span class="muted">›</span></div>`; };
   const sec = (title, list, empty) => `<h3 class="dsec">${title} <span class="cnt">${list.length}</span></h3>${list.map(line).join('') || `<div class="muted" style="font-size:13.5px;padding:4px 0 8px">${empty}</div>`}`;
   const off = isHol(s) ? `<span class="pill" style="background:var(--hol)">${esc(S.holidays[s].name||'วันหยุดราชการ')}</span>` : isWeekend(s) ? '<span class="pill" style="background:var(--off)">วันหยุดเสาร์-อาทิตย์</span>' : '';
   openModal(`<h2 style="margin-bottom:6px">${thDate(s,true)}</h2>${off}
@@ -1020,7 +1065,7 @@ function openPerson(pid){
       <div><b>${r.late}</b><span>มาสาย (ครั้ง)</span></div>
     </div>
     <h3 class="dsec">ประวัติการลา / ไปราชการ ล่าสุด</h3>
-    ${hist.map(e=>{ const T=TYPES[e.type]; return `<div class="dline" data-ev="${esc(e.id)}"><span class="pill" style="background:${T.bg};color:${T.fg};flex:none">${T.emoji} ${T.label}</span><div style="flex:1">${leaveSpan(e)}${e.title?`<div class="ag-meta">${esc(e.title)}</div>`:''}</div><span class="muted" style="font-size:12.5px;white-space:nowrap">${daysAgo(e.start)}</span></div>`; }).join('') || '<div class="muted" style="font-size:14px">ยังไม่มีประวัติ</div>'}
+    ${hist.map(e=>{ const T=TYPES[e.type]; return `<div class="dline" data-ev="${esc(e.id)}"><span class="pill" style="background:${T.bg};color:${T.fg};flex:none">${T.emoji} ${T.label}</span><div style="flex:1">${leaveSpan(e)}${e.title?`<div class="ag-meta">${esc(e.title)}</div>`:''}${filesLinks(e)}</div><span class="muted" style="font-size:12.5px;white-space:nowrap">${daysAgo(e.start)}</span></div>`; }).join('') || '<div class="muted" style="font-size:14px">ยังไม่มีประวัติ</div>'}
     <div class="mfoot"><button class="btn ghost" id="mCancel">ปิด</button>${S.canWrite?`<button class="btn pri" data-add-person-leave="${esc(pid)}">+ ลงวันลา</button>`:''}</div>`);
 }
 
@@ -1047,6 +1092,7 @@ document.addEventListener('click', async ev=>{
   if (d.addPerson) { openEvent(null, {person:d.addPerson, date:cursorDay}); return; }
   if (t.id==='addBtn') { openEvent(null, {date: view==='today'?cursorDay:todayIso()}); return; }
   if (d.type) { readEventForm(); M.type = d.type; if (TYPES[d.type].single) M.end = M.start; drawEvent(); return; }
+  if (d.rmfile !== undefined) { readEventForm(); M.files.splice(Number(d.rmfile),1); drawEvent(); return; }
   if (d.pp) { readEventForm(); const i = M.people.indexOf(d.pp); if (i>=0) M.people.splice(i,1); else M.people.push(d.pp); drawEvent(); return; }
   if (t.id==='mCancel') { closeModal(); return; }
   if (t.id==='mSave') { saveEvent(); return; }
@@ -1069,6 +1115,7 @@ document.addEventListener('click', async ev=>{
 });
 document.addEventListener('change', ev=>{
   const t = ev.target;
+  if (t.id==='mFile' && t.files && t.files.length) { uploadFiles(t.files); return; }
   if (t.id==='pickDay' && t.value) { cursorDay = t.value; render(); }
   if (t.id==='filterP') { filterPerson = t.value; render(); }
   if (t.id==='meSel') { lsSet('teamcal-me', t.value); toast(t.value ? 'ตั้งค่าผู้ใช้งานเป็น '+pname(t.value) : 'ล้างแล้ว'); }

@@ -14,7 +14,7 @@ const SH_STAFF = 'บุคลากร';
 const SH_HOL = 'วันหยุด';
 
 const EV_HEAD = ['รหัสรายการ', 'ประเภท', 'รหัสในบัญชีลงเวลา', 'วันที่เริ่ม', 'วันที่สิ้นสุด', 'เวลาเริ่ม', 'เวลาสิ้นสุด',
-  'เรื่อง', 'สถานที่', 'ผู้เกี่ยวข้อง', 'สถานะงานส่ง', 'หมายเหตุ', 'บันทึกล่าสุด', 'รหัสผู้เกี่ยวข้อง', 'ชนิด', 'ผู้บันทึก'];
+  'เรื่อง', 'สถานที่', 'ผู้เกี่ยวข้อง', 'สถานะงานส่ง', 'หมายเหตุ', 'บันทึกล่าสุด', 'รหัสผู้เกี่ยวข้อง', 'ชนิด', 'ผู้บันทึก', 'เอกสารแนบ'];
 const ST_HEAD = ['รหัส', 'ชื่อ-สกุล', 'ชื่อเล่น', 'ตำแหน่ง', 'กลุ่ม', 'ลำดับในกลุ่ม', 'วันลาพักผ่อนยกมา', 'สิทธิ์ลาพักผ่อนปีนี้', 'รวมวันลาพักผ่อน (ไม่เกินเพดาน)', 'เพดานวันลาสะสม', 'วันที่เข้ากลุ่ม', 'วันที่ออกจากกลุ่ม', 'ชื่อ LINE (สำหรับแท็ก)'];
 const HO_HEAD = ['วันที่', 'ชื่อวันหยุด'];
 
@@ -25,6 +25,10 @@ const TYPES = {
 };
 const GROUPS = ['ข้าราชการ', 'จ้างเหมาบริการ', 'พนักงานราชการ'];
 const TZ = 'Asia/Bangkok';
+// เอกสารแนบ (เช่น หนังสืออนุมัติไปราชการ) เก็บใน Google Drive ของเจ้าของสคริปต์
+const ATTACH_FOLDER_NAME = 'ปฏิทินงานทีม - เอกสารแนบ';
+const ATTACH_MAX_MB = 10;
+const ATTACH_SHARE_LINK = true;   // true = ทุกคนที่มีลิงก์เปิดดูได้ (คนในกลุ่มกดดูจากหน้าเว็บได้เลย)
 
 /* ---------- web API ---------- */
 function json_(o) {
@@ -44,6 +48,7 @@ function doPost(e) {
     if (body.action === 'save') return json_({ ok: true, data: saveItem(body.col, body.id, body.data) });
     if (body.action === 'delete') return json_({ ok: true, data: deleteItem(body.col, body.id) });
     if (body.action === 'getAll') return json_({ ok: true, data: getAll() });
+    if (body.action === 'upload') return json_({ ok: true, data: uploadFile_(body) });
     throw new Error('ไม่รู้จักคำสั่ง');
   } catch (err) { return json_({ ok: false, error: String(err && err.message || err) }); }
 }
@@ -105,7 +110,7 @@ function getAll() {
     events[r[0]] = {
       type, start: r[3], end: r[4] || r[3], time: r[5], endTime: r[6], title: r[7], place: r[8],
       people: String(r[13] || '').split(',').map(s => s.trim()).filter(Boolean),
-      done: r[10] === 'ส่งแล้ว', note: r[11], updatedAt: r[12], by: r[15]
+      done: r[10] === 'ส่งแล้ว', note: r[11], updatedAt: r[12], by: r[15], files: parseFiles_(r[16])
     };
   });
   rows_(sheet_(SH_HOL, HO_HEAD), HO_HEAD.length).forEach(r => { if (r[0]) holidays[r[0]] = { name: r[1] }; });
@@ -153,12 +158,53 @@ function saveEvent_(id, d) {
   const names = staffNames_();
   const row = [id, TYPES[type][0], TYPES[type][1], start, end, hhmm_(d.time), hhmm_(d.endTime),
     txt_(d.title, 300), txt_(d.place, 200), txt_(people.map(p => names[p] || '(ลบแล้ว)').join(', ')),
-    type === 'task' ? (d.done ? 'ส่งแล้ว' : 'ยังไม่ส่ง') : '', txt_(d.note, 1000), now_(), people.join(','), type, txt_(d.by, 80)];
+    type === 'task' ? (d.done ? 'ส่งแล้ว' : 'ยังไม่ส่ง') : '', txt_(d.note, 1000), now_(), people.join(','), type, txt_(d.by, 80), filesText_(d.files)];
   let r = findRow_(sh, id);
   if (r < 0) r = sh.getLastRow() + 1;
   const range = sh.getRange(r, 1, 1, row.length);
   range.setNumberFormat('@');
   range.setValues([row]);
+}
+
+/* ---------- เอกสารแนบ ---------- */
+// ในชีตเก็บเป็นบรรทัดละไฟล์: ชื่อไฟล์ | ลิงก์
+function filesText_(files) {
+  return (Array.isArray(files) ? files : []).slice(0, 10)
+    .filter(f => f && /^https:\/\/drive\.google\.com\/[\w\/?=&.-]+$/.test(String(f.url || '')))
+    .map(f => String(f.name || 'ไฟล์').replace(/[|\n\r]/g, ' ').trim().slice(0, 120) + ' | ' + f.url)
+    .join('\n');
+}
+function parseFiles_(v) {
+  return String(v || '').split('\n').map(l => {
+    const i = l.lastIndexOf(' | ');
+    return i > 0 ? { name: l.slice(0, i).trim(), url: l.slice(i + 3).trim() } : null;
+  }).filter(f => f && /^https:\/\//.test(f.url));
+}
+function attachFolder_() {
+  const id = PropertiesService.getScriptProperties().getProperty('ATTACH_FOLDER_ID');
+  if (id) { try { const f = DriveApp.getFolderById(id); if (!f.isTrashed()) return f; } catch (e) {} }
+  const f = DriveApp.createFolder(ATTACH_FOLDER_NAME);
+  PropertiesService.getScriptProperties().setProperty('ATTACH_FOLDER_ID', f.getId());
+  return f;
+}
+function uploadFile_(b) {
+  const name = String(b.name || 'ไฟล์').replace(/[\\/:*?"<>|\n\r]/g, '_').trim().slice(0, 120) || 'ไฟล์';
+  const mime = String(b.mime || '');
+  const okMime = /^(application\/pdf|image\/(jpeg|png|gif|webp|heic|heif)|application\/msword|application\/vnd\.openxmlformats-officedocument\.wordprocessingml\.document)$/;
+  if (!okMime.test(mime)) throw new Error('แนบได้เฉพาะ PDF, รูปภาพ หรือ Word');
+  const bytes = Utilities.base64Decode(String(b.data || ''));
+  if (!bytes.length) throw new Error('ไฟล์ว่าง');
+  if (bytes.length > ATTACH_MAX_MB * 1024 * 1024) throw new Error('ไฟล์ใหญ่เกิน ' + ATTACH_MAX_MB + ' MB');
+  const stamp = Utilities.formatDate(new Date(), TZ, 'yyyyMMdd-HHmm');
+  const file = attachFolder_().createFile(Utilities.newBlob(bytes, mime, stamp + ' ' + name));
+  if (ATTACH_SHARE_LINK) file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  return { name, url: 'https://drive.google.com/file/d/' + file.getId() + '/view' };
+}
+/** รันครั้งเดียวจากหน้าแก้โค้ด เพื่อให้สิทธิ์ Google Drive และสร้างโฟลเดอร์เก็บเอกสารแนบ */
+function setupAttach() {
+  const f = attachFolder_();
+  console.log('โฟลเดอร์เอกสารแนบ: ' + f.getUrl());
+  return f.getUrl();
 }
 
 function saveStaff_(id, d) {
@@ -242,7 +288,7 @@ function linePush_(to, msg) {
 // ตรวจว่าบอทอยู่ในกลุ่มนี้จริง (กันข้อมูลปลอมที่ยิงเข้ามาที่ /exec)
 function groupIsReal_(groupId) {
   if (!/^C[0-9a-f]{32}$/.test(String(groupId || ''))) return false;
-  try { lineApi_('/v2/bot/group/' + groupId + '/summary', null, 'get'); return true; } catch (e) { return false; }
+  try { lineApi_('/v2/bot/group/' + groupId + '/summary', null, 'get'); return true; } catch (e) { console.warn('ตรวจกลุ่มไม่ผ่าน: ' + e.message); return false; }
 }
 
 /* ---------- สร้างข้อความสรุปนัดของวัน ---------- */
@@ -367,4 +413,11 @@ function lineUsers_() {
 function showGroupId() {
   const g = props_().getProperty('LINE_GROUP_ID') || '(ยังไม่มี — พิมพ์ข้อความในกลุ่มหลังตั้ง Webhook ก่อน)';
   console.log(g); return g;
+}
+
+// ทดสอบการเชื่อมต่อ LINE (กด Run แล้วดูบันทึกการดำเนินการ)
+function testLine() {
+  const gid = GROUP_ID || props_().getProperty('LINE_GROUP_ID') || 'C0a8ade06f93c42ee40b1f870d2593f44';
+  try { console.log('บอท: ' + lineApi_('/v2/bot/info', null, 'get')); } catch (e) { console.log('บอท ERR: ' + e.message); }
+  try { console.log('กลุ่ม: ' + lineApi_('/v2/bot/group/' + gid + '/summary', null, 'get')); } catch (e) { console.log('กลุ่ม ERR: ' + e.message); }
 }
