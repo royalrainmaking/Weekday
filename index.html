@@ -432,6 +432,7 @@ nav.tabs .ls{display:none}
             if (code) {
               cell.value = code;
               cell.font = code === 'P' ? pFont : tFont;
+              if (code.length > 2) cell.alignment = Object.assign({}, cell.alignment, { shrinkToFit: true });
             }
             if (code === 'ส') late++;
             if (isOff(y, m, d) && code !== 'ป' && code !== 'ก') continue; // runs bridge weekends
@@ -481,7 +482,7 @@ const TYPES = {
   study: {code:'ศ',  label:'ลาไปศึกษา',   emoji:'', bg:'#f3d9fa', fg:'#862e9c', away:true},
   trip:  {code:'รช', label:'ไปราชการ',    emoji:'', bg:'#e5dbff', fg:'#5f3dc4', out:true, weekend:true},
   train: {code:'อ',  label:'อบรม',        emoji:'', bg:'#d8f5e0', fg:'#2b8a3e', out:true, weekend:true},
-  wfh:   {code:'w',  label:'WFH',         emoji:'', bg:'#d0f4f7', fg:'#0b7285', out:true},
+  wfh:   {code:'WFH',label:'WFH',         emoji:'', bg:'#d0f4f7', fg:'#0b7285', out:true},
   late:  {code:'ส',  label:'มาสาย',       emoji:'', bg:'#fff0b8', fg:'#8a6100', single:true},
   meet:  {code:'ปช', label:'ประชุม',      emoji:'', bg:'#ffdeeb', fg:'#c2255c', timed:true, weekend:true},
   task:  {code:'',   label:'งานที่ต้องส่ง', emoji:'', bg:'#fff4cf', fg:'#7a5a00', single:true, task:true, weekend:true},
@@ -556,7 +557,7 @@ const S = { staff:{}, events:{}, holidays:{}, ready:{staff:false,events:false,ho
 let SHEET_URL = '';
 let view = 'today', cursorDay = todayIso(), cursorMonth = todayIso().slice(0,7), filterPerson = '';
 // URL ของ Apps Script Web App (Deploy > Web app > /exec)
-const API_URL = 'https://script.google.com/macros/s/AKfycbwv16nFYEuuBCLYmit9b5eKacIxo_R53J1IQK2oDlF7zJwvNFEKNHZDV62JahBpuhrD1A/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbxELpwWsffPsROEYeRCZwMLCmzyt0mRUMLb_MondEjx0zzA0LLQYQNZnSt2IZYHKfZFbQ/exec';
 async function api(payload){
   const r = payload
     ? await fetch(API_URL, {method:'POST', body: JSON.stringify(payload)})   // text/plain: ไม่ต้อง preflight
@@ -794,7 +795,7 @@ function fyStats(pid, fy){
     if (c==='ส') r.late++;
     if (c==='รช') r.trip++;
     if (c==='อ') r.train++;
-    if (c==='w') r.wfh++;
+    if (c==='WFH') r.wfh++;
     if (c==='พ') r.vac++;
     if (isOff(s) && c!=='ป' && c!=='ก') continue;
     if (c==='ป'){ r.sick[1]++; if(prev!=='ป') r.sick[0]++; }
@@ -840,7 +841,7 @@ function vSettings(){
   const autop = lsGet('teamcal-autop')!=='0', meet = lsGet('teamcal-meet')==='1';
   return `<div class="set-grid">
     <div class="card"><h3 class="mali" style="margin-top:0">Export บัญชีลงเวลา (Excel)</h3>
-      <p class="muted" style="font-size:14px;margin-top:0">ส่งออกเป็นไฟล์ตามแบบ <b>บัญชีสรุปผลการมาปฏิบัติราชการ ปีงบประมาณ 2570</b> ที่ให้มา — รหัส ป / ก / พ / รช / อ / ศ / w / ส / ปช ลงในช่องวันที่ พร้อมสูตรนับวันเดิม</p>
+      <p class="muted" style="font-size:14px;margin-top:0">ส่งออกเป็นไฟล์ตามแบบ <b>บัญชีสรุปผลการมาปฏิบัติราชการ ปีงบประมาณ 2570</b> ที่ให้มา — รหัส ป / ก / พ / รช / อ / ศ / WFH / ส / ปช ลงในช่องวันที่ พร้อมสูตรนับวันเดิม</p>
       <label class="f">เติม ✓ (P = มาปฏิบัติงาน) วันทำการที่ไม่มีรายการ ถึงวันที่
         <input type="date" class="inp" id="xCut" value="${todayIso()}"></label>
       <label class="row" style="margin:10px 0;font-size:14px"><input type="checkbox" id="xAutoP" ${autop?'checked':''}> เติม ✓ อัตโนมัติ</label>
