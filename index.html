@@ -751,16 +751,16 @@ function openNote(id){
     ${n.by?`<div class="muted" style="font-size:12px;margin-top:8px">แปะโดย ${esc(n.by)}${n.createdAt?' · '+esc(n.createdAt):''}</div>`:''}
     <div class="mfoot"><div class="left">${id?'<button class="btn danger" id="nDel">ลบ</button>':''}</div>
       <button class="btn ghost" id="mCancel">ยกเลิก</button><button class="btn pri" id="nSave">บันทึก</button></div>`);
-  $('#modal').dataset.note = id || '';
-  $('#modal').dataset.ncolor = n.color || 'yellow';
+  $('#modal').dataset.noteId = id || '';
+  $('#modal').dataset.noteColor = n.color || 'yellow';
 }
 async function saveNote(){
-  const id = $('#modal').dataset.note || uid();
+  const id = $('#modal').dataset.noteId || uid();
   const text = $('#nText').value.trim();
   if (!text) return toast('พิมพ์ข้อความก่อนนะ');
   const old = S.notes[id] || {};
   const me = lsGet('teamcal-me');
-  const data = {...old, text, color: $('#modal').dataset.ncolor || 'yellow', owner: $('#nOwner').value, done: $('#nDone') ? $('#nDone').checked : false,
+  const data = {...old, text, color: $('#modal').dataset.noteColor || 'yellow', owner: $('#nOwner').value, done: $('#nDone') ? $('#nDone').checked : false,
     by: old.by || (S.staff[me] ? pname(me) : ''), createdAt: old.createdAt || ''};
   closeModal();
   if (await guard(store.set('notes', id, data))) toast('แปะโน้ตแล้ว');
@@ -1166,9 +1166,9 @@ document.addEventListener('click', async ev=>{
   if (d.notedone) { ev.stopPropagation(); const n = S.notes[d.notedone]; if (!n || !S.canWrite) return;
     await guard(store.set('notes', d.notedone, {...n, done: !n.done})); toast(n.done ? 'ย้ายกลับเป็นงานค้าง' : 'เยี่ยม! ปิดงานแล้ว'); return; }
   if (d.note) { if (S.canWrite) openNote(d.note); return; }
-  if (d.ncolor) { $('#modal').dataset.ncolor = d.ncolor; document.querySelectorAll('#nColors .swatch').forEach(b=>b.classList.toggle('on', b.dataset.ncolor===d.ncolor)); return; }
+  if (d.ncolor) { $('#modal').dataset.noteColor = d.ncolor; document.querySelectorAll('#nColors .swatch').forEach(b=>b.classList.toggle('on', b.dataset.ncolor===d.ncolor)); return; }
   if (t.id==='nSave') { saveNote(); return; }
-  if (t.id==='nDel') { if (t.dataset.sure) { const id=$('#modal').dataset.note; closeModal(); if (await guard(store.del('notes', id))) toast('ลบโน้ตแล้ว'); } else { t.dataset.sure='1'; t.textContent='กดอีกครั้งเพื่อยืนยันลบ'; } return; }
+  if (t.id==='nDel') { if (t.dataset.sure) { const id=$('#modal').dataset.noteId; closeModal(); if (await guard(store.del('notes', id))) toast('ลบโน้ตแล้ว'); } else { t.dataset.sure='1'; t.textContent='กดอีกครั้งเพื่อยืนยันลบ'; } return; }
   if (t.id==='mCancel') { closeModal(); return; }
   if (t.id==='mSave') { saveEvent(); return; }
   if (t.id==='mDel') { if (t.dataset.sure) { const id=M.id; closeModal(); if (await guard(store.del('events', id))) toast('ลบแล้ว'); } else { t.dataset.sure='1'; t.textContent='กดอีกครั้งเพื่อยืนยันลบ'; } return; }
