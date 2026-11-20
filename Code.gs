@@ -12,11 +12,14 @@
 const SH_EVENTS = 'รายการ';
 const SH_STAFF = 'บุคลากร';
 const SH_HOL = 'วันหยุด';
+const SH_NOTE = 'โน้ต';
 
 const EV_HEAD = ['รหัสรายการ', 'ประเภท', 'รหัสในบัญชีลงเวลา', 'วันที่เริ่ม', 'วันที่สิ้นสุด', 'เวลาเริ่ม', 'เวลาสิ้นสุด',
   'เรื่อง', 'สถานที่', 'ผู้เกี่ยวข้อง', 'สถานะงานส่ง', 'หมายเหตุ', 'บันทึกล่าสุด', 'รหัสผู้เกี่ยวข้อง', 'ชนิด', 'ผู้บันทึก', 'เอกสารแนบ'];
 const ST_HEAD = ['รหัส', 'ชื่อ-สกุล', 'ชื่อเล่น', 'ตำแหน่ง', 'กลุ่ม', 'ลำดับในกลุ่ม', 'วันลาพักผ่อนยกมา', 'สิทธิ์ลาพักผ่อนปีนี้', 'รวมวันลาพักผ่อน (ไม่เกินเพดาน)', 'เพดานวันลาสะสม', 'วันที่เข้ากลุ่ม', 'วันที่ออกจากกลุ่ม', 'ชื่อ LINE (สำหรับแท็ก)'];
 const HO_HEAD = ['วันที่', 'ชื่อวันหยุด'];
+const NO_HEAD = ['รหัส', 'ข้อความ', 'สี', 'รหัสเจ้าของ', 'ของใคร', 'เสร็จแล้ว', 'สร้างเมื่อ', 'ผู้บันทึก', 'อัปเดตล่าสุด'];
+const NOTE_COLORS = ['yellow', 'pink', 'mint', 'sky', 'lav'];
 
 const TYPES = {
   sick: ['ลาป่วย', 'ป'], biz: ['ลากิจ', 'ก'], vac: ['ลาพักผ่อน', 'พ'], study: ['ลาไปศึกษา', 'ศ'],
@@ -114,7 +117,11 @@ function getAll() {
     };
   });
   rows_(sheet_(SH_HOL, HO_HEAD), HO_HEAD.length).forEach(r => { if (r[0]) holidays[r[0]] = { name: r[1] }; });
-  return { staff, events, holidays, url: ss_().getUrl(), at: now_() };
+  const notes = {};
+  rows_(sheet_(SH_NOTE, NO_HEAD), NO_HEAD.length).forEach(r => {
+    if (r[0]) notes[r[0]] = { text: r[1], color: r[2] || 'yellow', owner: r[3], done: r[5] === 'เสร็จแล้ว', createdAt: r[6], by: r[7], updatedAt: r[8] };
+  });
+  return { staff, events, holidays, notes, url: ss_().getUrl(), at: now_() };
 }
 
 /* ---------- write ---------- */
@@ -126,6 +133,7 @@ function saveItem(col, id, data) {
     if (col === 'events') saveEvent_(idOk_(id), data);
     else if (col === 'staff') saveStaff_(idOk_(id), data);
     else if (col === 'holidays') saveHoliday_(isoDate_(id), data);
+    else if (col === 'notes') saveNote_(idOk_(id), data);
     else throw new Error('ไม่รู้จักชนิดข้อมูล');
     SpreadsheetApp.flush();
   } finally { lock.releaseLock(); }
@@ -136,7 +144,7 @@ function deleteItem(col, id) {
   const lock = LockService.getScriptLock();
   lock.waitLock(20000);
   try {
-    const name = col === 'events' ? SH_EVENTS : col === 'staff' ? SH_STAFF : col === 'holidays' ? SH_HOL : null;
+    const name = col === 'events' ? SH_EVENTS : col === 'staff' ? SH_STAFF : col === 'holidays' ? SH_HOL : col === 'notes' ? SH_NOTE : null;
     if (!name) throw new Error('ไม่รู้จักชนิดข้อมูล');
     const sh = ss_().getSheetByName(name);
     const row = sh ? findRow_(sh, id) : -1;
@@ -221,6 +229,18 @@ function saveStaff_(id, d) {
   const optDate = v => (v && /^\d{4}-\d{2}-\d{2}$/.test(String(v))) ? String(v) : '';
   sh.getRange(r, 11, 1, 2).setNumberFormat('@').setValues([[optDate(d.joined), optDate(d.left)]]);
   refreshNames_();
+}
+
+function saveNote_(id, d) {
+  const sh = sheet_(SH_NOTE, NO_HEAD);
+  const text = txt_(d.text, 500);
+  if (!text) throw new Error('ต้องใส่ข้อความ');
+  const owner = /^[A-Za-z0-9_-]{1,40}$/.test(String(d.owner || '')) ? String(d.owner) : '';
+  let r = findRow_(sh, id);
+  const created = r > 0 ? sh.getRange(r, 7).getDisplayValue() : now_();
+  if (r < 0) r = sh.getLastRow() + 1;
+  sh.getRange(r, 1, 1, NO_HEAD.length).setNumberFormat('@').setValues([[id, text, NOTE_COLORS.indexOf(d.color) >= 0 ? d.color : 'yellow',
+    owner, owner ? (staffNames_()[owner] || '') : '', d.done ? 'เสร็จแล้ว' : '', created, txt_(d.by, 80), now_()]]);
 }
 
 function saveHoliday_(date, d) {

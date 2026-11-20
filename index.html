@@ -302,6 +302,21 @@ nav.tabs .ls{display:none}
 .spin{width:18px;height:18px;border:3px solid rgba(0,0,0,.12);border-top-color:var(--pink,#e8668f);border-radius:50%;animation:spin .8s linear infinite;flex:none;display:inline-block}
 @keyframes spin{to{transform:rotate(360deg)}}
 .upbusy{display:flex;align-items:center;gap:10px;padding:10px 12px;margin:6px 0;border-radius:12px;background:var(--lemon2,#fff6d6);font-size:14px}
+.notebar{margin-top:16px}
+.notes{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;margin-top:10px}
+.postit{position:relative;min-height:120px;padding:14px 14px 10px;border-radius:4px 4px 14px 4px;box-shadow:0 6px 14px rgba(60,40,20,.12);cursor:pointer;display:flex;flex-direction:column;gap:8px;transition:transform .12s}
+.postit:nth-child(3n+1){transform:rotate(-1.2deg)} .postit:nth-child(3n+2){transform:rotate(.8deg)} .postit:nth-child(3n){transform:rotate(-.4deg)}
+.postit:hover{transform:rotate(0) translateY(-2px)}
+.postit::before{content:'';position:absolute;top:-7px;left:50%;width:46px;height:14px;margin-left:-23px;background:rgba(255,255,255,.55);border-radius:2px;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.postit .ntext{white-space:pre-wrap;word-break:break-word;font-size:14.5px;line-height:1.45;flex:1}
+.postit .nfoot{display:flex;align-items:center;gap:6px;font-size:12px;color:rgba(0,0,0,.55)}
+.postit .nfoot .who{display:inline-flex;align-items:center;gap:4px}
+.postit.done{opacity:.55} .postit.done .ntext{text-decoration:line-through}
+.postit .ndone{margin-left:auto;border:0;background:rgba(255,255,255,.65);border-radius:999px;padding:3px 10px;font:inherit;font-size:12px;cursor:pointer}
+.pi-yellow{background:#fff3a8} .pi-pink{background:#ffd6e2} .pi-mint{background:#cdf2dd} .pi-sky{background:#d3e8ff} .pi-lav{background:#e6dcff}
+.addnote{min-height:120px;border:2px dashed #e6d9c8;border-radius:14px;display:grid;place-items:center;color:#a08c74;background:transparent;cursor:pointer;font:inherit;font-size:14px}
+.swatch{width:30px;height:30px;border-radius:8px;border:2px solid transparent;cursor:pointer}
+.swatch.on{border-color:#5b4636}
 </style>
 </head>
 <body>
@@ -556,7 +571,7 @@ const lsGet = k => { try { return localStorage.getItem(k); } catch(e){ return nu
 const lsSet = (k,v) => { try { localStorage.setItem(k,v); } catch(e){} };
 
 /* ================= state & store ================= */
-const S = { staff:{}, events:{}, holidays:{}, ready:{staff:false,events:false,holidays:false}, canWrite:true, mode:'loading', names:{} };
+const S = { staff:{}, events:{}, holidays:{}, notes:{}, ready:{staff:false,events:false,holidays:false}, canWrite:true, mode:'loading', names:{} };
 let SHEET_URL = '';
 let view = 'today', cursorDay = todayIso(), cursorMonth = todayIso().slice(0,7), filterPerson = '';
 // URL ของ Apps Script Web App (Deploy > Web app > /exec)
@@ -572,7 +587,7 @@ async function api(payload){
 }
 function applyAll(d){
   if (!d) return;
-  S.staff = d.staff || {}; S.events = d.events || {}; S.holidays = d.holidays || {};
+  S.staff = d.staff || {}; S.events = d.events || {}; S.holidays = d.holidays || {}; S.notes = d.notes || {};
   SHEET_URL = d.url || SHEET_URL; S.mode = 'live'; S.lastAt = d.at || '';
   if (!$('#scrim').classList.contains('show')) render(); else renderMe();
 }
@@ -697,7 +712,58 @@ function vToday(){
       ${sec('งานที่ต้องส่ง', TYPES.task.fg, tasks.filter(e=>!e.done).length, tasks.map(taskRow).join(''), 'ไม่มีงานที่ต้องส่งในวันนี้', 'task')}
       ${sec('นัดหมาย', TYPES.other.fg, appts.length, appts.map(row).join(''), 'ไม่มีนัดหมายในวันนี้', 'other')}
       </div>
-    </div>`;
+    </div>
+    ${notesBoard()}`;
+}
+
+/* ---------- โน้ต / งานค้าง (post-it) ---------- */
+const NOTE_COLORS = ['yellow','pink','mint','sky','lav'];
+let SHOW_DONE_NOTES = false;
+const noteList = () => Object.entries(S.notes||{}).map(([id,n])=>({id,...n}));
+const daysSince = s => { const d = String(s||'').slice(0,10); if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return null; return Math.round((parse(todayIso()) - parse(d)) / 864e5); };
+function noteCard(n){
+  const age = daysSince(n.createdAt);
+  const ageTxt = n.done ? 'เสร็จแล้ว' : age===null ? '' : age<=0 ? 'วันนี้' : `ค้าง ${age} วัน`;
+  return `<div class="postit pi-${NOTE_COLORS.includes(n.color)?n.color:'yellow'} ${n.done?'done':''}" data-note="${esc(n.id)}">
+    <div class="ntext">${esc(n.text)}</div>
+    <div class="nfoot">${n.owner && S.staff[n.owner] ? `<span class="who">${avaHtml({id:n.owner},'xs')}${esc(pname(n.owner))}</span>` : ''}
+      <span>${esc(ageTxt)}</span>
+      ${S.canWrite?`<button class="ndone" data-notedone="${esc(n.id)}">${n.done?'↺ ยังไม่เสร็จ':'✓ เสร็จ'}</button>`:''}</div></div>`;
+}
+function notesBoard(){
+  const all = noteList();
+  const open = all.filter(n=>!n.done).sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)));
+  const done = all.filter(n=>n.done).sort((a,b)=>String(b.updatedAt).localeCompare(String(a.updatedAt)));
+  return `<section class="card notebar" style="border-top:4px solid #f5c84c">
+    <div class="row" style="justify-content:space-between;flex-wrap:wrap;gap:8px"><h3>📝 โน้ต / งานค้าง <span class="cnt">${open.length}</span></h3>
+      <div class="row" style="gap:8px">${done.length?`<button class="btn sm ghost" id="togDoneNotes">${SHOW_DONE_NOTES?'ซ่อน':'ดู'}ที่เสร็จแล้ว (${done.length})</button>`:''}
+      ${S.canWrite?'<button class="btn sm ghost" id="addNote">+ เพิ่มโน้ต</button>':''}</div></div>
+    <div class="notes">${open.map(noteCard).join('')}${SHOW_DONE_NOTES?done.map(noteCard).join(''):''}
+      ${S.canWrite?'<button class="addnote" id="addNote2">＋ แปะโน้ตใหม่</button>':(open.length?'':'<div class="muted">ยังไม่มีโน้ต</div>')}</div></section>`;
+}
+function openNote(id){
+  const n = id ? {...S.notes[id]} : {text:'', color:'yellow', owner: (S.staff[lsGet('teamcal-me')] ? lsGet('teamcal-me') : ''), done:false};
+  openModal(`<h2>${id?'แก้ไขโน้ต':'แปะโน้ตใหม่'}</h2>
+    <label class="f">ข้อความ / งานที่ค้าง<textarea class="inp" id="nText" rows="4" maxlength="500" placeholder="เช่น ตามเรื่องเบิกค่าเดินทาง นครสวรรค์">${esc(n.text||'')}</textarea></label>
+    <div class="f" style="margin-top:10px">สี<div class="row" style="gap:8px;margin-top:4px" id="nColors">${NOTE_COLORS.map(c=>`<button class="swatch pi-${c} ${c===(n.color||'yellow')?'on':''}" data-ncolor="${c}" title="${c}"></button>`).join('')}</div></div>
+    <label class="f" style="margin-top:10px">ของใคร / ใครรับผิดชอบ<select class="inp" id="nOwner"><option value="">— ทั้งทีม / ไม่ระบุ —</option>${staffActiveOn(todayIso()).map(p=>`<option value="${esc(p.id)}" ${p.id===n.owner?'selected':''}>${esc(p.nick||shortName(p.name))}</option>`).join('')}</select></label>
+    ${id?`<label class="row" style="margin-top:10px;font-size:14px"><input type="checkbox" id="nDone" ${n.done?'checked':''}> เสร็จแล้ว</label>`:''}
+    ${n.by?`<div class="muted" style="font-size:12px;margin-top:8px">แปะโดย ${esc(n.by)}${n.createdAt?' · '+esc(n.createdAt):''}</div>`:''}
+    <div class="mfoot"><div class="left">${id?'<button class="btn danger" id="nDel">ลบ</button>':''}</div>
+      <button class="btn ghost" id="mCancel">ยกเลิก</button><button class="btn pri" id="nSave">บันทึก</button></div>`);
+  $('#modal').dataset.note = id || '';
+  $('#modal').dataset.ncolor = n.color || 'yellow';
+}
+async function saveNote(){
+  const id = $('#modal').dataset.note || uid();
+  const text = $('#nText').value.trim();
+  if (!text) return toast('พิมพ์ข้อความก่อนนะ');
+  const old = S.notes[id] || {};
+  const me = lsGet('teamcal-me');
+  const data = {...old, text, color: $('#modal').dataset.ncolor || 'yellow', owner: $('#nOwner').value, done: $('#nDone') ? $('#nDone').checked : false,
+    by: old.by || (S.staff[me] ? pname(me) : ''), createdAt: old.createdAt || ''};
+  closeModal();
+  if (await guard(store.set('notes', id, data))) toast('แปะโน้ตแล้ว');
 }
 
 const LEAVE_KINDS = ['sick','biz','vac','study','trip','train','wfh','late'];
@@ -1072,7 +1138,7 @@ function openPerson(pid){
 
 /* ================= events (delegated) ================= */
 document.addEventListener('click', async ev=>{
-  const t = ev.target.closest('button, [data-ev], [data-dayc], [data-cell], [data-person], a');
+  const t = ev.target.closest('button, [data-ev], [data-dayc], [data-cell], [data-person], [data-note], a');
   if (!t) return;
   const d = t.dataset;
   if (d.done !== undefined && t.dataset.done) { const e = S.events[d.done]; if (!e || !S.canWrite) return;
@@ -1095,6 +1161,14 @@ document.addEventListener('click', async ev=>{
   if (d.type) { readEventForm(); M.type = d.type; if (TYPES[d.type].single) M.end = M.start; drawEvent(); return; }
   if (d.rmfile !== undefined) { readEventForm(); M.files.splice(Number(d.rmfile),1); drawEvent(); return; }
   if (d.pp) { readEventForm(); const i = M.people.indexOf(d.pp); if (i>=0) M.people.splice(i,1); else M.people.push(d.pp); drawEvent(); return; }
+  if (t.id==='addNote' || t.id==='addNote2') { openNote(null); return; }
+  if (t.id==='togDoneNotes') { SHOW_DONE_NOTES = !SHOW_DONE_NOTES; render(); return; }
+  if (d.notedone) { ev.stopPropagation(); const n = S.notes[d.notedone]; if (!n || !S.canWrite) return;
+    await guard(store.set('notes', d.notedone, {...n, done: !n.done})); toast(n.done ? 'ย้ายกลับเป็นงานค้าง' : 'เยี่ยม! ปิดงานแล้ว'); return; }
+  if (d.note) { if (S.canWrite) openNote(d.note); return; }
+  if (d.ncolor) { $('#modal').dataset.ncolor = d.ncolor; document.querySelectorAll('#nColors .swatch').forEach(b=>b.classList.toggle('on', b.dataset.ncolor===d.ncolor)); return; }
+  if (t.id==='nSave') { saveNote(); return; }
+  if (t.id==='nDel') { if (t.dataset.sure) { const id=$('#modal').dataset.note; closeModal(); if (await guard(store.del('notes', id))) toast('ลบโน้ตแล้ว'); } else { t.dataset.sure='1'; t.textContent='กดอีกครั้งเพื่อยืนยันลบ'; } return; }
   if (t.id==='mCancel') { closeModal(); return; }
   if (t.id==='mSave') { saveEvent(); return; }
   if (t.id==='mDel') { if (t.dataset.sure) { const id=M.id; closeModal(); if (await guard(store.del('events', id))) toast('ลบแล้ว'); } else { t.dataset.sure='1'; t.textContent='กดอีกครั้งเพื่อยืนยันลบ'; } return; }
