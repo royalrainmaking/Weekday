@@ -747,7 +747,6 @@ function openNote(id){
     <label class="f">ข้อความ / งานที่ค้าง<textarea class="inp" id="nText" rows="4" maxlength="500" placeholder="เช่น ตามเรื่องเบิกค่าเดินทาง นครสวรรค์">${esc(n.text||'')}</textarea></label>
     <div class="f" style="margin-top:10px">สี<div class="row" style="gap:8px;margin-top:4px" id="nColors">${NOTE_COLORS.map(c=>`<button class="swatch pi-${c} ${c===(n.color||'yellow')?'on':''}" data-ncolor="${c}" title="${c}"></button>`).join('')}</div></div>
     <label class="f" style="margin-top:10px">ของใคร / ใครรับผิดชอบ<select class="inp" id="nOwner"><option value="">— ทั้งทีม / ไม่ระบุ —</option>${staffActiveOn(todayIso()).map(p=>`<option value="${esc(p.id)}" ${p.id===n.owner?'selected':''}>${esc(p.nick||shortName(p.name))}</option>`).join('')}</select></label>
-    ${id?`<label class="row" style="margin-top:10px;font-size:14px"><input type="checkbox" id="nDone" ${n.done?'checked':''}> เสร็จแล้ว</label>`:''}
     ${n.by?`<div class="muted" style="font-size:12px;margin-top:8px">แปะโดย ${esc(n.by)}${n.createdAt?' · '+esc(n.createdAt):''}</div>`:''}
     <div class="mfoot"><div class="left">${id?'<button class="btn danger" id="nDel">ลบ</button>':''}</div>
       <button class="btn ghost" id="mCancel">ยกเลิก</button><button class="btn pri" id="nSave">บันทึก</button></div>`);
@@ -760,7 +759,7 @@ async function saveNote(){
   if (!text) return toast('พิมพ์ข้อความก่อนนะ');
   const old = S.notes[id] || {};
   const me = lsGet('teamcal-me');
-  const data = {...old, text, color: $('#modal').dataset.noteColor || 'yellow', owner: $('#nOwner').value, done: $('#nDone') ? $('#nDone').checked : false,
+  const data = {...old, text, color: $('#modal').dataset.noteColor || 'yellow', owner: $('#nOwner').value, done: !!old.done,
     by: old.by || (S.staff[me] ? pname(me) : ''), createdAt: old.createdAt || ''};
   closeModal();
   if (await guard(store.set('notes', id, data))) toast('แปะโน้ตแล้ว');
